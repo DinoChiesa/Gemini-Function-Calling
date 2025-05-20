@@ -2,6 +2,7 @@ import requests
 import json
 
 BASE_API_URL = "https://generativelanguage.googleapis.com"
+TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
 def get_api_key():
     """
@@ -49,8 +50,7 @@ def generate_content(api_key):
     if not api_key:
         return
 
-    model_name = "gemini-2.5-flash-preview-05-20"
-    url = f"{BASE_API_URL}/v1beta/models/{model_name}:generateContent?key={api_key}"
+    url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
 
     payload = {
       "system_instruction": {
