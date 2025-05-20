@@ -3,6 +3,7 @@ import json
 import random
 import glob
 import os
+import argparse
 
 BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
@@ -170,11 +171,12 @@ def extract_function_calls_from_response(response_data):
                         extracted_function_calls.append(part["functionCall"])
     return extracted_function_calls
 
-def invoke_with_function_calling(api_key):
+def invoke_with_function_calling(api_key, verbose=False):
     """
     Gets a random function calling payload, sends its content to the
     Gemini API, and returns a list of extracted function calls.
     Each item in the list is a dictionary with "name" and "arguments".
+    If verbose is True, logs full request and response payloads.
     """
     if not api_key:
         return []
@@ -211,15 +213,17 @@ def invoke_with_function_calling(api_key):
             response_iter = None
             try:
                 print(f"Making API call for iteration {iteration_num + 1}...")
-                # AI! Modify this program to accept a --verbose flag. If set, it should
-                # Log full payloads of requests and responses. 
-                # print(json.dumps(current_payload_for_api_call, indent=2, ensure_ascii=False)) # Optional: Log full payload
+                if verbose:
+                    print("Request Payload:")
+                    print(json.dumps(current_payload_for_api_call, indent=2, ensure_ascii=False))
                 response_iter = requests.post(url, json=current_payload_for_api_call, headers=headers)
                 response_iter.raise_for_status()
                 current_api_response_json = response_iter.json()
                 last_processed_api_response_json = current_api_response_json # Update on successful call
                 print(f"Response from API received.")
-                # print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False)) # Optional: Log full response
+                if verbose:
+                    print("Response Payload:")
+                    print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False))
             except requests.exceptions.RequestException as e_req_iter:
                 print(f"RequestException during API call: {e_req_iter}")
                 if response_iter is not None: print(f"Response content: {response_iter.text}")
@@ -307,9 +311,13 @@ def invoke_with_function_calling(api_key):
 from callable_functions import KNOWN_FUNCTIONS
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test script for Gemini API function calling.")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging of API requests and responses.")
+    args = parser.parse_args()
+
     api_key_value = get_api_key()
     if api_key_value:
-        invoke_with_function_calling(api_key_value)
+        invoke_with_function_calling(api_key_value, verbose=args.verbose)
         # fetch_models(api_key_value)
         # for _ in range(3):
         #    generate_content(api_key_value)
