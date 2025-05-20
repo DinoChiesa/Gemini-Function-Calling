@@ -233,6 +233,14 @@ if __name__ == "__main__":
             print("\nExtracted Function Calls:")
             for fc in function_calls:
                 print(json.dumps(fc, indent=2))
+                if fc.get("name") == "get_max_scrabble_word_score":
+                    args = fc.get("arguments")
+                    if args and "candidate" in args:
+                        word = args["candidate"]
+                        score = get_max_scrabble_word_score(word)
+                        print(f"Score for '{word}': {score}")
+                    else:
+                        print(f"Could not call get_max_scrabble_word_score, arguments missing 'candidate': {args}")
         else:
             print("\nNo function calls extracted or an error occurred.")
         # fetch_models(api_key_value)
