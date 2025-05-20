@@ -7,6 +7,9 @@ import os
 BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
+# AI! populate a list named NAMES with these person names and a few others:
+#  Roberto, Blake, Carson, Ali, Sundar, Suresh, Surpreet, Yinbang, Cal
+
 def get_api_key():
     """
     Reads the API key from the '.google-gemini-apikey' file.
@@ -135,6 +138,9 @@ def get_random_function_calling_payload():
 
         with open(selected_file_path, "r") as f:
             payload = json.load(f)
+
+        # TODO Modify this logic to replace placeholder words like :NAME and :ENGLISH_WORD
+        # with values selected at random from fixed lists. 
         return payload, selected_file_path
 
     except FileNotFoundError:
@@ -211,7 +217,7 @@ def invoke_with_function_calling(api_key):
 
                     if args_dict is not None and isinstance(args_dict, dict):
                         arg_values = list(args_dict.values())
-                    
+
                     try:
                         result = target_function(*arg_values)
                         args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
@@ -225,7 +231,7 @@ def invoke_with_function_calling(api_key):
                             response_content_for_tool["is_known"] = result
                         else: # Generic result key if not specifically handled
                             response_content_for_tool["result"] = result
-                        
+
                         function_tool_response_parts.append({
                             "functionResponse": {
                                 "name": function_name,
@@ -240,14 +246,14 @@ def invoke_with_function_calling(api_key):
                         print(f"Error calling local function {function_name} with arguments {arg_values}: {e}")
                 # else: (function_name not in KNOWN_FUNCTIONS)
                 #     print(f"Function '{function_name}' is not a known invokable function.")
-            
+
             # Proceed to 2nd API call if there were successful local function calls that generated parts
             if function_tool_response_parts:
                 second_payload_contents = list(original_payload_contents) # Start with original user content
 
                 if model_content_from_first_response: # Add model's response (that contained function calls)
                     second_payload_contents.append(model_content_from_first_response)
-                
+
                 # Add the tool execution results
                 second_payload_contents.append({
                     "role": "tool",
@@ -262,7 +268,7 @@ def invoke_with_function_calling(api_key):
                 if "system_instruction" in payload:
                      second_api_payload["system_instruction"] = payload["system_instruction"]
                 second_api_payload["contents"] = second_payload_contents
-                
+
                 print("\nMaking 2nd API call with augmented payload:")
                 print(json.dumps(second_api_payload, indent=2,ensure_ascii=False))
 
@@ -282,7 +288,7 @@ def invoke_with_function_calling(api_key):
                 print("\nNo successful local function calls or results to form a 2nd API request.")
         else:
             print("\nNo function calls extracted from 1st response, skipping 2nd API call.")
-            
+
     except requests.exceptions.RequestException as e:
         print(f"An error occurred during the 1st API call: {e}")
         if 'response' in locals() and response is not None: # check if response variable exists
