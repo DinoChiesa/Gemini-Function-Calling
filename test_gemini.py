@@ -201,6 +201,8 @@ def invoke_with_function_calling(api_key, verbose=False):
         # `current_payload_for_api_call` will be the payload sent in each iteration.
         # For the first iteration, it's the initial payload.
         current_payload_for_api_call = payload
+        
+        initial_prompt_text = _get_text_from_payload(payload, type="initial_prompt")
 
         current_api_response_json = None
         last_processed_api_response_json = None # Stores the last valid response before loop termination or error
@@ -276,12 +278,36 @@ def invoke_with_function_calling(api_key, verbose=False):
         if last_processed_api_response_json:
             print("Final API Response (or last successfully processed response):")
             print(json.dumps(last_processed_api_response_json, indent=2, ensure_ascii=False))
+
+            final_response_text = _get_text_from_payload(last_processed_api_response_json, type="final_response")
+
+            print("\n--- Summary ---")
+            if initial_prompt_text:
+                print(f"Initial Prompt: {initial_prompt_text}")
+            else:
+                print("Initial Prompt: Could not extract.")
+            
+            if final_response_text:
+                print(f"Final Response Text: {final_response_text}")
+            else:
+                print("Final Response Text: Could not extract or not a text response.")
         else:
             print("No API response was successfully processed to be displayed as final.")
 
     except Exception as e: # Catch-all for other unexpected errors during setup
         print(f"An unexpected error occurred in invoke_with_function_calling: {e}")
     # No explicit return here, function will return None if execution reaches end.
+
+def _get_text_from_payload(data, type="initial_prompt"):
+    """Safely extracts text from payload structures."""
+    try:
+        if type == "initial_prompt":
+            return data["contents"][0]["parts"][0]["text"]
+        elif type == "final_response":
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (IndexError, KeyError, TypeError):
+        return None
+    return None
 
 def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
     """
