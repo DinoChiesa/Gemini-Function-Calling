@@ -187,23 +187,7 @@ def invoke_with_function_calling(api_key):
         content_data = response.json()
         # print(json.dumps(content_data, indent=2)) # Original print of full response
 
-        return extract_function_calls_from_response(content_data)
-
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred during function calling invocation: {e}")
-        if response is not None:
-            print(f"Response content: {response.text}")
-        return []
-    except json.JSONDecodeError:
-        print("Failed to decode JSON from function calling response.")
-        return []
-
-from callable_functions import KNOWN_FUNCTIONS
-
-if __name__ == "__main__":
-    api_key_value = get_api_key()
-    if api_key_value:
-        function_calls = invoke_with_function_calling(api_key_value)
+        function_calls= extract_function_calls_from_response(content_data)
         if function_calls:
             print("\nExtracted Function Calls:")
             for fc in function_calls:
@@ -243,6 +227,23 @@ if __name__ == "__main__":
                 #     print(f"Function '{function_name}' is not a known invokable function.")
         else:
             print("\nNo function calls extracted or an error occurred.")
+
+            
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred during function calling invocation: {e}")
+        if response is not None:
+            print(f"Response content: {response.text}")
+        return []
+    except json.JSONDecodeError:
+        print("Failed to decode JSON from function calling response.")
+        return []
+
+from callable_functions import KNOWN_FUNCTIONS
+
+if __name__ == "__main__":
+    api_key_value = get_api_key()
+    if api_key_value:
+        invoke_with_function_calling(api_key_value)
         # fetch_models(api_key_value)
         # for _ in range(3):
         #    generate_content(api_key_value)
