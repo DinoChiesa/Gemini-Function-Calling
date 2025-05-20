@@ -13,6 +13,7 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
+    # AI! sort this list of words alphabetically
     "Xylophone", "Rabblerouser", "Parameter", "Boredom", "Standoffish", "Concrete",
     "Ephemeral", "Ubiquitous", "Serendipity", "Mellifluous", "Quixotic", "Labyrinth",
     "Nefarious", "Juxtaposition", "Cacophony", "Ephemeral", "Quintessential", "Zephyr"
