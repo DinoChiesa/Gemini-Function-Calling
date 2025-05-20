@@ -151,24 +151,15 @@ def get_random_function_calling_payload():
 def extract_function_calls_from_response(response_data):
     """
     Extracts function call details from the Gemini API response.
-    Returns a list of dictionaries, each with "name" and "arguments".
+    Returns a list of functionCall objects directly from the response.
     """
-
-    # AI! Modify this logic to just extract the "functionCall" elements from the
-    # response, and return an array of those elements, without remapping field names or
-    # changing them. You will also need to modify the handling of the output
-    # from invoke_with_function_calling, to handle this format.
     extracted_function_calls = []
     if "candidates" in response_data:
         for candidate in response_data.get("candidates", []):
             if "content" in candidate and "parts" in candidate["content"]:
                 for part in candidate["content"].get("parts", []):
                     if "functionCall" in part:
-                        function_call_data = part["functionCall"]
-                        extracted_function_calls.append({
-                            "name": function_call_data.get("name"),
-                            "arguments": function_call_data.get("args")
-                        })
+                        extracted_function_calls.append(part["functionCall"])
     return extracted_function_calls
 
 def invoke_with_function_calling(api_key):
@@ -239,13 +230,13 @@ if __name__ == "__main__":
             for fc in function_calls:
                 print(json.dumps(fc, indent=2))
                 if fc.get("name") == "get_max_scrabble_word_score":
-                    args = fc.get("arguments")
+                    args = fc.get("args") # Changed "arguments" to "args"
                     if args and "candidate" in args:
                         word = args["candidate"]
                         score = get_max_scrabble_word_score(word)
                         print(f"Score for '{word}': {score}")
                     else:
-                        print(f"Could not call get_max_scrabble_word_score, arguments missing 'candidate': {args}")
+                        print(f"Could not call get_max_scrabble_word_score, 'args' or 'candidate' key missing: {args}")
         else:
             print("\nNo function calls extracted or an error occurred.")
         # fetch_models(api_key_value)
