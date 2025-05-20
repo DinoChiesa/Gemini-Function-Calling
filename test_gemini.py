@@ -152,10 +152,37 @@ def get_random_function_calling_payload():
         print(f"\nSelected function calling payload file: {selected_file_path}")
 
         with open(selected_file_path, "r") as f:
-            payload = json.load(f)
+            payload_str = f.read()
 
-        # AI! Modify this logic to replace placeholder words like :NAME and :ENGLISH_WORD
-        # with values selected at random from the lists in REPLACEMENTS. 
+        # Replace placeholders
+        # The placeholders are like :KEY_IN_REPLACEMENTS_DICT (e.g. :NAMES -> :NAME)
+        # or :SINGULAR_FORM_OF_KEY (e.g. :ENGLISH_WORDS -> :ENGLISH_WORD)
+        for key, word_list in REPLACEMENTS.items():
+            placeholder_singular = f":{key[:-1]}" # e.g. :NAME from NAMES, :ENGLISH_WORD from ENGLISH_WORDS
+            placeholder_plural_as_singular_for_convention = f":{key.replace('_WORDS', '_WORD')}" # e.g. :ENGLISH_WORD
+
+            # More robust placeholder detection, e.g. :NAME, :ENGLISH_WORD
+            # We'll use a convention that the placeholder is the singular form of the key in REPLACEMENTS
+            # e.g., for "NAMES", placeholder is ":NAME"; for "ENGLISH_WORDS", placeholder is ":ENGLISH_WORD"
+            
+            actual_placeholder_to_find = ""
+            if key == "NAMES":
+                actual_placeholder_to_find = ":NAME"
+            elif key == "ENGLISH_WORDS":
+                actual_placeholder_to_find = ":ENGLISH_WORD"
+            # Add more specific placeholder mappings if needed, or refine the convention
+
+            if actual_placeholder_to_find:
+                while actual_placeholder_to_find in payload_str:
+                    if word_list: # Ensure the list is not empty
+                        replacement_word = random.choice(word_list)
+                        payload_str = payload_str.replace(actual_placeholder_to_find, replacement_word, 1)
+                    else:
+                        # If the list is empty, break to avoid infinite loop on placeholder
+                        print(f"Warning: Word list for {key} is empty, cannot replace {actual_placeholder_to_find}")
+                        break
+        
+        payload = json.loads(payload_str) # Convert back to Python object
         return payload, selected_file_path
 
     except FileNotFoundError:
