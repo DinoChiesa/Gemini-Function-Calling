@@ -54,8 +54,6 @@ def get_max_scrabble_word_score(*args):
 
     total_score = 0
 
-    # AI! Modify this logic such that if the word length is over 9 characters,
-    # Each additional character is worth one extra bonus point.
     for char_original in word:
         char_upper = char_original.upper()
         if not char_upper.isascii():
@@ -67,6 +65,11 @@ def get_max_scrabble_word_score(*args):
             total_score += 1
         else:
             total_score += 2
+
+    # Add bonus points for word length over 9 characters
+    if len(word) > 9:
+        bonus_points = len(word) - 9
+        total_score += bonus_points
 
     return total_score
 
