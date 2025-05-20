@@ -42,7 +42,7 @@ def fetch_models(api_key):
         print(f"An error occurred: {e}")
     except json.JSONDecodeError:
         print("Failed to decode JSON from response.")
-        
+
 def get_is_known_word(candidate):
     """
     Checks the online dictionary to determine if the candidate is an actual word."
@@ -52,10 +52,10 @@ def get_is_known_word(candidate):
 
     try:
         response = requests.get(url)
-        
+
         if response.status_code == 200:
             # Optionally, you might still want to see the JSON response for a known word
-            # models_data = response.json() 
+            # models_data = response.json()
             # print(json.dumps(models_data, indent=2))
             return True
         elif response.status_code == 404:
@@ -75,6 +75,7 @@ def get_is_known_word(candidate):
         print(f"Failed to decode JSON from response for word '{candidate}'.")
         return False
 
+    
 def generate_content(api_key):
     """
     Generates content using the Google Generative Language API via a POST request
@@ -161,7 +162,7 @@ def get_random_function_calling_payload():
         if not candidate_files:
             print("No 'function-candidate-*.json' files found in the current directory.")
             return None, None
-        
+
         selected_file_path = random.choice(candidate_files)
         print(f"\nSelected function calling payload file: {selected_file_path}")
 
@@ -243,14 +244,14 @@ def get_max_scrabble_word_score(word):
         char_upper = char_original.upper()
         if not char_upper.isascii():
             return 0  # Stop and return 0 if non-ASCII character is found
-        
+
         if char_upper in ('X', 'Y'):
             total_score += 5
         elif char_upper in ('E', 'S', 'T', 'A'):
             total_score += 1
         else:
             total_score += 2
-            
+
     return total_score
 
 if __name__ == "__main__":
