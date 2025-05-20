@@ -202,9 +202,6 @@ def invoke_with_function_calling(api_key):
             if "content" in first_candidate:
                 model_content_from_first_response = first_candidate["content"]
 
-        # AI! is this necessary? This variable isn't read until it is set again.
-        extracted_api_calls = extract_function_calls_from_response(content_data_first_response)
-
         # Iterative function calling logic starts here.
         # `content_data_first_response` is the result of the initial API call.
         # `payload` is the original full payload used for the first call.
