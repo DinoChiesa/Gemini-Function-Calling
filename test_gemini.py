@@ -131,7 +131,7 @@ def invoke_with_function_calling(api_key):
         if not candidate_files:
             print("No 'function-candidate-*.json' files found in the current directory.")
             return
-        
+
         selected_file_path = random.choice(candidate_files)
         print(f"\nSelected function calling payload: {selected_file_path}")
 
@@ -171,7 +171,7 @@ def invoke_with_function_calling(api_key):
 if __name__ == "__main__":
     api_key_value = get_api_key()
     if api_key_value:
+        invoke_with_function_calling(api_key_value)
         # fetch_models(api_key_value)
-        for _ in range(3):
-            generate_content(api_key_value)
-
+        # for _ in range(3):
+        #    generate_content(api_key_value)
