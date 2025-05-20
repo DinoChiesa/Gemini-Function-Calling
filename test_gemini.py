@@ -254,6 +254,12 @@ def get_max_scrabble_word_score(word):
 
     return total_score
 
+KNOWN_FUNCTIONS = {
+    "get_max_scrabble_word_score": get_max_scrabble_word_score,
+    "get_is_known_word": get_is_known_word,
+    # Add other known functions here as they are defined
+}
+
 if __name__ == "__main__":
     api_key_value = get_api_key()
     if api_key_value:
@@ -262,14 +268,23 @@ if __name__ == "__main__":
             print("\nExtracted Function Calls:")
             for fc in function_calls:
                 print(json.dumps(fc, indent=2))
-                if fc.get("name") == "get_max_scrabble_word_score":
-                    args = fc.get("args") # Changed "arguments" to "args"
-                    if args and "candidate" in args:
-                        word = args["candidate"]
-                        score = get_max_scrabble_word_score(word)
-                        print(f"Score for '{word}': {score}")
+                function_name = fc.get("name")
+                
+                if function_name in KNOWN_FUNCTIONS:
+                    target_function = KNOWN_FUNCTIONS[function_name]
+                    args = fc.get("args")
+                    
+                    if args and "candidate" in args: # Common argument key for both current functions
+                        candidate_arg = args["candidate"]
+                        try:
+                            result = target_function(candidate_arg)
+                            print(f"Result of {function_name}('{candidate_arg}'): {result}")
+                        except Exception as e:
+                            print(f"Error calling {function_name} with '{candidate_arg}': {e}")
                     else:
-                        print(f"Could not call get_max_scrabble_word_score, 'args' or 'candidate' key missing: {args}")
+                        print(f"Could not call {function_name}, 'args' or 'candidate' key missing: {args}")
+                # else:
+                #     print(f"Function '{function_name}' is not a known invokable function.")
         else:
             print("\nNo function calls extracted or an error occurred.")
         # fetch_models(api_key_value)
