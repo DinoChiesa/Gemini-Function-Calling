@@ -197,11 +197,11 @@ def invoke_with_function_calling(api_key, verbose=False):
         # `ongoing_contents_list` will accumulate parts for subsequent calls.
         # It starts with the user's initial prompt.
         ongoing_contents_list = list(payload.get("contents", []))
-        
+
         # `current_payload_for_api_call` will be the payload sent in each iteration.
         # For the first iteration, it's the initial payload.
-        current_payload_for_api_call = payload 
-        
+        current_payload_for_api_call = payload
+
         current_api_response_json = None
         last_processed_api_response_json = None # Stores the last valid response before loop termination or error
 
@@ -243,7 +243,7 @@ def invoke_with_function_calling(api_key, verbose=False):
                 candidate = current_api_response_json["candidates"][0]
                 if "content" in candidate:
                     model_content_part = candidate["content"]
-            
+
             # Append the model's response (that contained function calls) to ongoing_contents_list
             # Only if it's not the very first iteration's user prompt (which is already there)
             if model_content_part and (iteration_num > 0 or ongoing_contents_list != [model_content_part]):
@@ -273,14 +273,14 @@ def invoke_with_function_calling(api_key, verbose=False):
                         if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
                         elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
                         else: response_content_for_tool["result"] = result
-                        
+
                         function_tool_response_parts.append({
                             "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
                         })
                     except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
                     except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
                 else: print(f"Function '{function_name}' is not a known invokable function.")
-            
+
             tool_response_section = {"role": "tool", "parts": function_tool_response_parts}
             ongoing_contents_list.append(tool_response_section)
 
@@ -296,7 +296,7 @@ def invoke_with_function_calling(api_key, verbose=False):
                 "system_instruction": payload.get("system_instruction") # Use original system instruction
             }
             current_payload_for_api_call = {k: v for k, v in next_api_call_payload_parts.items() if v is not None}
-            
+
         print("\n--- Iterative Function Calling Process Ended ---")
         if last_processed_api_response_json:
             print("Final API Response (or last successfully processed response):")
@@ -312,6 +312,7 @@ from callable_functions import KNOWN_FUNCTIONS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test script for Gemini API function calling.")
+    # AI! flip the sense here. Instead of a --verbose flag, accept a --quiet flag, and default to "verbose" logging
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging of API requests and responses.")
     args = parser.parse_args()
 
