@@ -1,6 +1,8 @@
 import requests
 import json
 
+BASE_API_URL = "https://generativelanguage.googleapis.com"
+
 def get_api_key():
     """
     Reads the API key from the '.google-gemini-apikey' file.
@@ -24,7 +26,7 @@ def fetch_models(api_key):
     if not api_key:
         return
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+    url = f"{BASE_API_URL}/v1beta/models?key={api_key}"
 
     try:
         response = requests.get(url)
@@ -48,7 +50,7 @@ def generate_content(api_key):
         return
 
     model_name = "gemini-2.5-flash-preview-05-20"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    url = f"{BASE_API_URL}/v1beta/models/{model_name}:generateContent?key={api_key}"
 
     payload = {
       "system_instruction": {
