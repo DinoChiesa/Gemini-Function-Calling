@@ -204,6 +204,14 @@ def invoke_with_function_calling(api_key):
 
         extracted_api_calls = extract_function_calls_from_response(content_data_first_response)
 
+        # AI! Modify this logic to make the extraction and function calling
+        # _iterative_.  For each post, this program should examine the response
+        # payload for "functionCall" parts.  If found, the program should invoke
+        # the function(s), augment the "contents" field of the payload with the
+        # response data (continuing to grow the contents over each repitition),
+        # and make another POST call.
+        # Halt when the number of iterations reaches 10, or when there are no more "functionCall" parts found in the response. then print the json result.
+        
         if extracted_api_calls:
             print("\nExtracted Function Calls from 1st response:")
             function_tool_response_parts = [] # For the "parts" array of the tool response
@@ -299,6 +307,7 @@ def invoke_with_function_calling(api_key):
     except json.JSONDecodeError:
         print("Failed to decode JSON from the 1st API call response.")
         return [] # Return empty list as per original error handling
+
 
 from callable_functions import KNOWN_FUNCTIONS
 
