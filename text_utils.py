@@ -6,22 +6,24 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
-    # AI! Augment this list with 7 nonsense words , like maybe taken from
-    # the Lewis Carroll peom "Jabberwocky", or similar fanciful texts.
     "Apple",           # A
     "Boredom",         # B
+    "Brillig",         # Nonsense
     "Cacophony",       # C
     "Concrete",        # C (already present)
     "Dystopian",       # D
     "Ephemeral",       # E
     "Flummox",         # F
     "Gargantuan",      # G
+    "Gimble",          # Nonsense
+    "Gyre",            # Nonsense
     "Halcyon",         # H
     "Incandescent",    # I
     "Juxtaposition",   # J
     "Kaleidoscope",    # K
     "Labyrinth",       # L
     "Mellifluous",     # M
+    "Mimsy",           # Nonsense
     "Nefarious",       # N
     "Onomatopoeia",    # O
     "Parameter",       # P
@@ -29,10 +31,13 @@ ENGLISH_WORDS = [
     "Quixotic",        # Q (already present)
     "Rabblerouser",    # R
     "Serendipity",     # S
+    "Slithy",          # Nonsense
     "Standoffish",     # S (already present)
     "Tesseract",       # T
+    "Toves",           # Nonsense
     "Ubiquitous",      # U
     "Vicarious",       # V
+    "Wabe",            # Nonsense
     "Wanderlust",      # W
     "Xylophone",       # X
     "Yare",            # Y
