@@ -6,12 +6,37 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
-    # AI! extend this list with more interesting words such that for each letter in the English language alphabet,
-    # there is at least one word begins with that letter , in this list.
-    "Boredom", "Cacophony", "Concrete", "Ephemeral", "Juxtaposition", "Labyrinth",
-    "Mellifluous", "Nefarious", "Parameter", "Quintessential", "Quixotic",
-    "Rabblerouser", "Serendipity", "Standoffish", "Ubiquitous", "Xylophone", "Zephyr"
+    "Apple",           # A
+    "Boredom",         # B
+    "Cacophony",       # C
+    "Concrete",        # C (already present)
+    "Dystopian",       # D
+    "Ephemeral",       # E
+    "Flummox",         # F
+    "Gargantuan",      # G
+    "Halcyon",         # H
+    "Incandescent",    # I
+    "Juxtaposition",   # J
+    "Kaleidoscope",    # K
+    "Labyrinth",       # L
+    "Mellifluous",     # M
+    "Nefarious",       # N
+    "Onomatopoeia",    # O
+    "Parameter",       # P
+    "Quintessential",  # Q
+    "Quixotic",        # Q (already present)
+    "Rabblerouser",    # R
+    "Serendipity",     # S
+    "Standoffish",     # S (already present)
+    "Tesseract",       # T
+    "Ubiquitous",      # U
+    "Vicarious",       # V
+    "Wanderlust",      # W
+    "Xylophone",       # X
+    "Yare",            # Y
+    "Zephyr"           # Z
 ]
+ENGLISH_WORDS.sort() # Ensure the list is sorted alphabetically
 
 REPLACEMENTS = {
     ":NAME": NAMES,
