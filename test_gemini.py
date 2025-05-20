@@ -154,6 +154,8 @@ def get_random_function_calling_payload():
         with open(selected_file_path, "r") as f:
             payload_str = f.read()
 
+        # AI! Extract this placeholder word replacement logic into an independent function.
+        
         # Replace placeholders
         # The placeholders are like :KEY_IN_REPLACEMENTS_DICT (e.g. :NAMES -> :NAME)
         # or :SINGULAR_FORM_OF_KEY (e.g. :ENGLISH_WORDS -> :ENGLISH_WORD)
