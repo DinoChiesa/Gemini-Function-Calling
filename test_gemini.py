@@ -153,6 +153,11 @@ def extract_function_calls_from_response(response_data):
     Extracts function call details from the Gemini API response.
     Returns a list of dictionaries, each with "name" and "arguments".
     """
+
+    # AI! Modify this logic to just extract the "functionCall" elements from the
+    # response, and return an array of those elements, without remapping field names or
+    # changing them. You will also need to modify the handling of the output
+    # from invoke_with_function_calling, to handle this format.
     extracted_function_calls = []
     if "candidates" in response_data:
         for candidate in response_data.get("candidates", []):
