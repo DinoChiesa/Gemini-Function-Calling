@@ -13,10 +13,9 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
-    # AI! sort this list of words alphabetically
-    "Xylophone", "Rabblerouser", "Parameter", "Boredom", "Standoffish", "Concrete",
-    "Ephemeral", "Ubiquitous", "Serendipity", "Mellifluous", "Quixotic", "Labyrinth",
-    "Nefarious", "Juxtaposition", "Cacophony", "Ephemeral", "Quintessential", "Zephyr"
+    "Boredom", "Cacophony", "Concrete", "Ephemeral", "Juxtaposition", "Labyrinth",
+    "Mellifluous", "Nefarious", "Parameter", "Quintessential", "Quixotic",
+    "Rabblerouser", "Serendipity", "Standoffish", "Ubiquitous", "Xylophone", "Zephyr"
 ]
 
 def get_api_key():
