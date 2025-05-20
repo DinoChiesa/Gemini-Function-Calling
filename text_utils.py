@@ -39,9 +39,11 @@ def replace_placeholders_in_string(text_content, replacements_map):
             random.shuffle(available_words_for_this_key) # Shuffle to make pop() effectively random
 
             while actual_placeholder_to_find in text_content:
+                # AI! Modify this so that if there are no other available words,
+                # reset the list and begin again, silently. Print no warning.
                 if not available_words_for_this_key:
                     print(f"Warning: Ran out of unique words for placeholder {actual_placeholder_to_find}. Some placeholders may remain.")
-                    break # No more unique words to use for this placeholder
+                    break 
 
                 if word_list: # Original check, good to keep
                     # Pick a word that hasn't been used yet for this key in this text_content
