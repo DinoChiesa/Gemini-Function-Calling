@@ -12,6 +12,11 @@ NAMES = [
     "Yinbang", "Cal", "Maria", "David", "Aisha", "Kenji"
 ]
 
+ENGLISH_WORDS = [
+    "Xylophone", "Rabblerouser", "Parameter", "Boredom", "Standoffish", "Concrete"
+    # AI! add abou t12 more interesting english words to this list
+]
+
 def get_api_key():
     """
     Reads the API key from the '.google-gemini-apikey' file.
