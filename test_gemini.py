@@ -13,8 +13,9 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
-    "Xylophone", "Rabblerouser", "Parameter", "Boredom", "Standoffish", "Concrete"
-    # AI! add abou t12 more interesting english words to this list
+    "Xylophone", "Rabblerouser", "Parameter", "Boredom", "Standoffish", "Concrete",
+    "Ephemeral", "Ubiquitous", "Serendipity", "Mellifluous", "Quixotic", "Labyrinth",
+    "Nefarious", "Juxtaposition", "Cacophony", "Ephemeral", "Quintessential", "Zephyr"
 ]
 
 def get_api_key():
