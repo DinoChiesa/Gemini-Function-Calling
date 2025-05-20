@@ -254,32 +254,7 @@ def invoke_with_function_calling(api_key, verbose=False):
             elif not model_content_part:
                 print("Warning: Could not find model's content part in the current response to append.")
 
-            # AI! Factor out the function/tool calling logic into a separate function in this module.
-            function_tool_response_parts = []
-            print(f"\nExecuting {len(extracted_api_calls)} extracted function call(s):")
-            for fc_from_api in extracted_api_calls:
-                function_name = fc_from_api.get("name")
-                if function_name in KNOWN_FUNCTIONS:
-                    target_function = KNOWN_FUNCTIONS[function_name]
-                    args_dict = fc_from_api.get("args")
-                    arg_values = list(args_dict.values()) if args_dict and isinstance(args_dict, dict) else []
-
-                    try:
-                        result = target_function(*arg_values)
-                        args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
-                        print(f"Result of local {function_name}({args_repr}): {result}")
-
-                        response_content_for_tool = args_dict.copy() if args_dict else {}
-                        if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
-                        elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
-                        else: response_content_for_tool["result"] = result
-
-                        function_tool_response_parts.append({
-                            "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
-                        })
-                    except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
-                    except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
-                else: print(f"Function '{function_name}' is not a known invokable function.")
+            function_tool_response_parts = execute_and_format_tool_calls(extracted_api_calls, KNOWN_FUNCTIONS)
 
             tool_response_section = {"role": "tool", "parts": function_tool_response_parts}
             ongoing_contents_list.append(tool_response_section)
@@ -307,6 +282,48 @@ def invoke_with_function_calling(api_key, verbose=False):
     except Exception as e: # Catch-all for other unexpected errors during setup
         print(f"An unexpected error occurred in invoke_with_function_calling: {e}")
     # No explicit return here, function will return None if execution reaches end.
+
+def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
+    """
+    Executes local functions based on extracted API calls and formats their responses.
+    
+    Args:
+        extracted_api_calls: A list of function call objects from the API.
+        known_functions_map: A dictionary mapping function names to callable functions.
+        
+    Returns:
+        A list of formatted function response parts for the API.
+    """
+    function_tool_response_parts = []
+    if not extracted_api_calls:
+        return function_tool_response_parts
+
+    print(f"\nExecuting {len(extracted_api_calls)} extracted function call(s):")
+    for fc_from_api in extracted_api_calls:
+        function_name = fc_from_api.get("name")
+        if function_name in known_functions_map:
+            target_function = known_functions_map[function_name]
+            args_dict = fc_from_api.get("args")
+            arg_values = list(args_dict.values()) if args_dict and isinstance(args_dict, dict) else []
+
+            try:
+                result = target_function(*arg_values)
+                args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
+                print(f"Result of local {function_name}({args_repr}): {result}")
+
+                response_content_for_tool = args_dict.copy() if args_dict else {}
+                if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
+                elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
+                else: response_content_for_tool["result"] = result
+                
+                function_tool_response_parts.append({
+                    "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
+                })
+            except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
+            except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
+        else: 
+            print(f"Function '{function_name}' is not a known invokable function.")
+    return function_tool_response_parts
 
 from callable_functions import KNOWN_FUNCTIONS
 
