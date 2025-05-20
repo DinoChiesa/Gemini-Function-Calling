@@ -189,40 +189,47 @@ def invoke_with_function_calling(api_key):
     }
 
     try:
-        print(f"Invoking model with function calling payload from: {selected_file_path}...")
+        print(f"Starting iterative function calling with payload from: {selected_file_path}...")
 
-        # AI! Reduce code redundancy. Refactor this logic and the loop that
-        # follows to use exactly ONE call to requests.post, within the loop. It
-        # should use the correct, current payload each time through the loop.
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        content_data_first_response = response.json()
-        # print(json.dumps(content_data_first_response, indent=2)) # Original print of full response
-
-        original_payload_contents = payload.get("contents", [])
-        model_content_from_first_response = None
-        if content_data_first_response.get("candidates"):
-            first_candidate = content_data_first_response["candidates"][0]
-            if "content" in first_candidate:
-                model_content_from_first_response = first_candidate["content"]
-
-        # Iterative function calling logic starts here.
-        # `content_data_first_response` is the result of the initial API call.
         # `payload` is the original full payload used for the first call.
-
-        ongoing_contents_list = list(payload.get("contents", [])) # Start with original user prompt parts
-        current_api_response_json = content_data_first_response   # Response from the latest API call
-        last_processed_api_response_json = content_data_first_response # Stores the last response
+        # `ongoing_contents_list` will accumulate parts for subsequent calls.
+        # It starts with the user's initial prompt.
+        ongoing_contents_list = list(payload.get("contents", []))
+        
+        # `current_payload_for_api_call` will be the payload sent in each iteration.
+        # For the first iteration, it's the initial payload.
+        current_payload_for_api_call = payload 
+        
+        current_api_response_json = None
+        last_processed_api_response_json = None # Stores the last valid response before loop termination or error
 
         max_iterations = 10
         for iteration_num in range(max_iterations):
             print(f"\n--- Iteration {iteration_num + 1} of up to {max_iterations} ---")
 
+            # Make the API call
+            response_iter = None
+            try:
+                print(f"Making API call for iteration {iteration_num + 1}...")
+                # print(json.dumps(current_payload_for_api_call, indent=2, ensure_ascii=False)) # Optional: Log full payload
+                response_iter = requests.post(url, json=current_payload_for_api_call, headers=headers)
+                response_iter.raise_for_status()
+                current_api_response_json = response_iter.json()
+                last_processed_api_response_json = current_api_response_json # Update on successful call
+                print(f"Response from API received.")
+                # print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False)) # Optional: Log full response
+            except requests.exceptions.RequestException as e_req_iter:
+                print(f"RequestException during API call: {e_req_iter}")
+                if response_iter is not None: print(f"Response content: {response_iter.text}")
+                break # Exit loop on API error
+            except json.JSONDecodeError as e_json_iter:
+                print(f"JSONDecodeError during API call: {e_json_iter}")
+                break # Exit loop on API error
+
             extracted_api_calls = extract_function_calls_from_response(current_api_response_json)
 
             if not extracted_api_calls:
                 print("No function calls found in the latest API response. Halting iteration.")
-                last_processed_api_response_json = current_api_response_json
                 break
 
             model_content_part = None
@@ -230,11 +237,17 @@ def invoke_with_function_calling(api_key):
                 candidate = current_api_response_json["candidates"][0]
                 if "content" in candidate:
                     model_content_part = candidate["content"]
-
-            if model_content_part:
-                ongoing_contents_list.append(model_content_part)
-            else:
+            
+            # Append the model's response (that contained function calls) to ongoing_contents_list
+            # Only if it's not the very first iteration's user prompt (which is already there)
+            if model_content_part and (iteration_num > 0 or ongoing_contents_list != [model_content_part]):
+                 # Check to avoid duplicating the model's response if it was already added
+                 # This logic might need refinement based on exact desired accumulation behavior
+                if not any(part == model_content_part for part in ongoing_contents_list):
+                    ongoing_contents_list.append(model_content_part)
+            elif not model_content_part:
                 print("Warning: Could not find model's content part in the current response to append.")
+
 
             function_tool_response_parts = []
             print(f"\nExecuting {len(extracted_api_calls)} extracted function call(s):")
@@ -254,60 +267,39 @@ def invoke_with_function_calling(api_key):
                         if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
                         elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
                         else: response_content_for_tool["result"] = result
-
+                        
                         function_tool_response_parts.append({
                             "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
                         })
                     except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
                     except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
                 else: print(f"Function '{function_name}' is not a known invokable function.")
-
+            
             tool_response_section = {"role": "tool", "parts": function_tool_response_parts}
             ongoing_contents_list.append(tool_response_section)
 
             if iteration_num == max_iterations - 1:
                 print("\nMax iterations reached. The current response is considered final.")
-                last_processed_api_response_json = current_api_response_json
                 break
 
+            # Prepare payload for the next iteration
             next_api_call_payload_parts = {
                 "contents": ongoing_contents_list,
-                "tools": payload.get("tools"),
-                "generation_config": payload.get("generation_config"),
-                "system_instruction": payload.get("system_instruction")
+                "tools": payload.get("tools"), # Use original tools definition
+                "generation_config": payload.get("generation_config"), # Use original gen config
+                "system_instruction": payload.get("system_instruction") # Use original system instruction
             }
-            next_api_call_payload = {k: v for k, v in next_api_call_payload_parts.items() if v is not None}
-
-            print(f"\nMaking next API call (context for iteration {iteration_num + 2}):")
-            # print(json.dumps(next_api_call_payload, indent=2, ensure_ascii=False)) # Optional: Log full payload
-
-            response_iter = None
-            try:
-                response_iter = requests.post(url, json=next_api_call_payload, headers=headers)
-                response_iter.raise_for_status()
-                current_api_response_json = response_iter.json()
-                last_processed_api_response_json = current_api_response_json
-                print(f"Response from API received.")
-                # print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False)) # Optional: Log full response
-            except requests.exceptions.RequestException as e_req_iter:
-                print(f"RequestException during iterative call: {e_req_iter}")
-                if response_iter is not None: print(f"Response content: {response_iter.text}")
-                break
-            except json.JSONDecodeError as e_json_iter:
-                print(f"JSONDecodeError during iterative call: {e_json_iter}")
-                break
-
+            current_payload_for_api_call = {k: v for k, v in next_api_call_payload_parts.items() if v is not None}
+            
         print("\n--- Iterative Function Calling Process Ended ---")
         if last_processed_api_response_json:
             print("Final API Response (or last successfully processed response):")
             print(json.dumps(last_processed_api_response_json, indent=2, ensure_ascii=False))
+        else:
+            print("No API response was successfully processed to be displayed as final.")
 
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred during the initial API call: {e}")
-        if 'response' in locals() and response is not None:
-            print(f"Response content: {response.text}")
-    except json.JSONDecodeError:
-        print("Failed to decode JSON from the initial API call response.")
+    except Exception as e: # Catch-all for other unexpected errors during setup
+        print(f"An unexpected error occurred in invoke_with_function_calling: {e}")
     # No explicit return here, function will return None if execution reaches end.
 
 from callable_functions import KNOWN_FUNCTIONS
