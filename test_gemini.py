@@ -64,7 +64,8 @@ def generate_content(api_key):
             "prompts": [
                 "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I Want to optimize for absorbtion and satiety.",
                 "Should I consider an apple to be a good source of fiber? How much fiber should a healthy adult consume ddaily?",
-                "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply? About how many carbs would a normal 2500-calorie diet include?"
+                "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply? About how many carbs would a normal 2500-calorie diet include?",
+                "What are the macro ratios I should shoot for in my daily diet, if I'm a normal healty adult male?"
             ]
         }
     ]
@@ -115,9 +116,12 @@ def generate_content(api_key):
     except json.JSONDecodeError:
         print("Failed to decode JSON from content generation response.")
 
+
+
 if __name__ == "__main__":
     api_key_value = get_api_key()
     if api_key_value:
-        fetch_models(api_key_value)
+        # fetch_models(api_key_value)
         for _ in range(3):
             generate_content(api_key_value)
+
