@@ -32,9 +32,7 @@ def fetch_models(api_key):
 
     try:
         response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-
-        # Assuming the response is JSON, parse it and print
+        response.raise_for_status()
         models_data = response.json()
         print(json.dumps(models_data, indent=2))
 
@@ -58,7 +56,7 @@ def generate_content(api_key):
             "instruction": "You are an expert travel advisor. You are helpful and polite.",
             "prompts": [
                 "If someone said <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?",
-                "If I am visiting Seattle in May, should I rent a car, or would it be better to take public transit and uber/lyft?"
+                "If I am visiting Seattle in June (I will be flying in), should I rent a car, or would it be better to take public transit and uber/lyft?"
             ]
         },
         {
@@ -106,9 +104,7 @@ def generate_content(api_key):
         print(f"Instruction: {selected_instruction}")
         print(f"Prompt: {selected_prompt}")
         response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-
-        # Assuming the response is JSON, parse it and print
+        response.raise_for_status()
         content_data = response.json()
         print(json.dumps(content_data, indent=2))
 
