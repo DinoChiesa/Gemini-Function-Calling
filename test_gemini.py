@@ -55,16 +55,16 @@ def generate_content(api_key):
         {
             "instruction": "You are an expert travel advisor. You are helpful and polite.",
             "prompts": [
-                "If someone said <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?",
+                "If someone tells me <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?",
                 "If I am visiting Seattle in June (I will be flying in), should I rent a car, or would it be better to take public transit and uber/lyft?"
             ]
         },
         {
-            "instruction": "You are a nutritionist. You provide matter-of-fact information, and are terse.",
+            "instruction": "You are a nutritionist. You provide matter-of-fact information, in your thorough, explanatory answers.",
             "prompts": [
                 "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I Want to optimize for absorbtion and satiety.",
-                "Should I consider an apple to be a good source of fiber? ",
-                "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply?"
+                "Should I consider an apple to be a good source of fiber? How much fiber should a healthy adult consume ddaily?",
+                "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply? About how many carbs would a normal 2500-calorie diet include?"
             ]
         }
     ]
