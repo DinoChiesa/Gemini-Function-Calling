@@ -121,17 +121,18 @@ def generate_content(api_key):
 def invoke_with_function_calling(api_key):
     """
     Selects a random function-candidate-*.json file, sends its content to the
-    Gemini API, and prints the JSON response.
+    Gemini API, and returns a list of extracted function calls.
+    Each item in the list is a dictionary with "name" and "arguments".
     """
     if not api_key:
-        return
+        return []
 
     try:
         candidate_files = glob.glob("function-candidate-*.json")
         if not candidate_files:
             print("No 'function-candidate-*.json' files found in the current directory.")
-            return
-
+            return []
+        
         selected_file_path = random.choice(candidate_files)
         print(f"\nSelected function calling payload: {selected_file_path}")
 
@@ -140,13 +141,13 @@ def invoke_with_function_calling(api_key):
 
     except FileNotFoundError:
         print(f"Error: File {selected_file_path} not found after selection (should not happen).")
-        return
+        return []
     except json.JSONDecodeError:
         print(f"Error: Could not decode JSON from {selected_file_path}.")
-        return
+        return []
     except Exception as e:
         print(f"An error occurred while preparing the payload: {e}")
-        return
+        return []
 
     url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
     headers = {
@@ -158,20 +159,41 @@ def invoke_with_function_calling(api_key):
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         content_data = response.json()
-        print(json.dumps(content_data, indent=2))
+        # print(json.dumps(content_data, indent=2)) # Original print of full response
+
+        extracted_function_calls = []
+        if "candidates" in content_data:
+            for candidate in content_data.get("candidates", []):
+                if "content" in candidate and "parts" in candidate["content"]:
+                    for part in candidate["content"].get("parts", []):
+                        if "functionCall" in part:
+                            function_call_data = part["functionCall"]
+                            extracted_function_calls.append({
+                                "name": function_call_data.get("name"),
+                                "arguments": function_call_data.get("args")
+                            })
+        return extracted_function_calls
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred during function calling invocation: {e}")
         if response is not None:
             print(f"Response content: {response.text}")
+        return []
     except json.JSONDecodeError:
         print("Failed to decode JSON from function calling response.")
+        return []
 
 
 if __name__ == "__main__":
     api_key_value = get_api_key()
     if api_key_value:
-        invoke_with_function_calling(api_key_value)
+        function_calls = invoke_with_function_calling(api_key_value)
+        if function_calls:
+            print("\nExtracted Function Calls:")
+            for fc in function_calls:
+                print(json.dumps(fc, indent=2))
+        else:
+            print("\nNo function calls extracted or an error occurred.")
         # fetch_models(api_key_value)
         # for _ in range(3):
         #    generate_content(api_key_value)
