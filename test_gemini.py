@@ -214,9 +214,6 @@ if __name__ == "__main__":
                     target_function = KNOWN_FUNCTIONS[function_name]
                     args = fc.get("args")
 
-                    # AI! Modify this code to ignore the name of the argument.
-                    # Just invoke the functions with the list of arguments provided in
-                    # the fc item. 
                     if args and "candidate" in args: # Common argument key for both current functions
                         candidate_arg = args["candidate"]
                         try:
