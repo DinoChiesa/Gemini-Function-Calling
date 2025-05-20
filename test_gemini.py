@@ -254,7 +254,7 @@ def invoke_with_function_calling(api_key, verbose=False):
             elif not model_content_part:
                 print("Warning: Could not find model's content part in the current response to append.")
 
-
+            # AI! Factor out the function/tool calling logic into a separate function in this module.
             function_tool_response_parts = []
             print(f"\nExecuting {len(extracted_api_calls)} extracted function call(s):")
             for fc_from_api in extracted_api_calls:
