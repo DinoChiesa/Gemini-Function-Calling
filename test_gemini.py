@@ -211,6 +211,8 @@ def invoke_with_function_calling(api_key):
             response_iter = None
             try:
                 print(f"Making API call for iteration {iteration_num + 1}...")
+                # AI! Modify this program to accept a --verbose flag. If set, it should
+                # Log full payloads of requests and responses. 
                 # print(json.dumps(current_payload_for_api_call, indent=2, ensure_ascii=False)) # Optional: Log full payload
                 response_iter = requests.post(url, json=current_payload_for_api_call, headers=headers)
                 response_iter.raise_for_status()
