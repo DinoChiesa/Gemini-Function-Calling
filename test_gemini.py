@@ -148,6 +148,24 @@ def get_random_function_calling_payload():
         print(f"An error occurred while selecting or loading the payload: {e}")
         return None, None
 
+def extract_function_calls_from_response(response_data):
+    """
+    Extracts function call details from the Gemini API response.
+    Returns a list of dictionaries, each with "name" and "arguments".
+    """
+    extracted_function_calls = []
+    if "candidates" in response_data:
+        for candidate in response_data.get("candidates", []):
+            if "content" in candidate and "parts" in candidate["content"]:
+                for part in candidate["content"].get("parts", []):
+                    if "functionCall" in part:
+                        function_call_data = part["functionCall"]
+                        extracted_function_calls.append({
+                            "name": function_call_data.get("name"),
+                            "arguments": function_call_data.get("args")
+                        })
+    return extracted_function_calls
+
 def invoke_with_function_calling(api_key):
     """
     Gets a random function calling payload, sends its content to the
@@ -173,18 +191,7 @@ def invoke_with_function_calling(api_key):
         content_data = response.json()
         # print(json.dumps(content_data, indent=2)) # Original print of full response
 
-        extracted_function_calls = []
-        if "candidates" in content_data:
-            for candidate in content_data.get("candidates", []):
-                if "content" in candidate and "parts" in candidate["content"]:
-                    for part in candidate["content"].get("parts", []):
-                        if "functionCall" in part:
-                            function_call_data = part["functionCall"]
-                            extracted_function_calls.append({
-                                "name": function_call_data.get("name"),
-                                "arguments": function_call_data.get("args")
-                            })
-        return extracted_function_calls
+        return extract_function_calls_from_response(content_data)
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred during function calling invocation: {e}")
