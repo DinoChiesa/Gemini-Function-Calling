@@ -1,5 +1,6 @@
 import requests
 import json
+import random
 
 BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
@@ -52,10 +53,32 @@ def generate_content(api_key):
 
     url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
 
+    instruction_prompts = [
+        {
+            "instruction": "You are an expert travel advisor. You are helpful and polite.",
+            "prompts": [
+                "If someone said <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?",
+                "If I am visiting Seattle in May, should I rent a car, or would it be better to take public transit and uber/lyft?"
+            ]
+        },
+        {
+            "instruction": "You are a nutritionist. You provide matter-of-fact information, and are terse.",
+            "prompts": [
+                "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I Want to optimize for absorbtion and satiety.",
+                "Should I consider an apple to be a good source of fiber? ",
+                "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply?"
+            ]
+        }
+    ]
+
+    selected_scenario = random.choice(instruction_prompts)
+    selected_instruction = selected_scenario["instruction"]
+    selected_prompt = random.choice(selected_scenario["prompts"])
+
     payload = {
       "system_instruction": {
         "parts": {
-          "text": "You are an expert travel advisor. You are helpful and polite."
+          "text": selected_instruction
         }
       },
       "contents": [
@@ -63,7 +86,7 @@ def generate_content(api_key):
           "role": "user",
           "parts": [
             {
-              "text": "If someone said <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?"
+              "text": selected_prompt
             }
           ]
         }
@@ -79,7 +102,9 @@ def generate_content(api_key):
     }
 
     try:
-        print(f"\nGenerating content with model: {model_name}...")
+        print(f"\nGenerating content with model: {TEXT_MODEL_NAME}...")
+        print(f"Instruction: {selected_instruction}")
+        print(f"Prompt: {selected_prompt}")
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
