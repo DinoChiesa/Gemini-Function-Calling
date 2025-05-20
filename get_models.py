@@ -17,15 +17,15 @@ def fetch_models():
         return
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-    
+
     try:
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-        
+
         # Assuming the response is JSON, parse it and print
         models_data = response.json()
         print(json.dumps(models_data, indent=2))
-        
+
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
     except json.JSONDecodeError:
