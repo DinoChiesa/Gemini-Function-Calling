@@ -1,19 +1,27 @@
 import requests
 import json
 
-def fetch_models():
+def get_api_key():
     """
-    Fetches models from the Google Generative Language API and prints the JSON response.
-    The API key is read from the '.google-gemini-apikey' file.
+    Reads the API key from the '.google-gemini-apikey' file.
+    Returns the API key as a string, or None if an error occurs.
     """
     try:
         with open(".google-gemini-apikey", "r") as f:
             api_key = f.read().strip()
+        return api_key
     except FileNotFoundError:
         print("Error: API key file '.google-gemini-apikey' not found.")
-        return
+        return None
     except Exception as e:
         print(f"Error reading API key file: {e}")
+        return None
+
+def fetch_models(api_key):
+    """
+    Fetches models from the Google Generative Language API and prints the JSON response.
+    """
+    if not api_key:
         return
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
@@ -31,20 +39,12 @@ def fetch_models():
     except json.JSONDecodeError:
         print("Failed to decode JSON from response.")
 
-def generate_content():
+def generate_content(api_key):
     """
     Generates content using the Google Generative Language API via a POST request
     and prints the JSON response.
-    The API key is read from the '.google-gemini-apikey' file.
     """
-    try:
-        with open(".google-gemini-apikey", "r") as f:
-            api_key = f.read().strip()
-    except FileNotFoundError:
-        print("Error: API key file '.google-gemini-apikey' not found.")
-        return
-    except Exception as e:
-        print(f"Error reading API key file: {e}")
+    if not api_key:
         return
 
     model_name = "gemini-2.5-flash-preview-05-20"
@@ -93,5 +93,7 @@ def generate_content():
         print("Failed to decode JSON from content generation response.")
 
 if __name__ == "__main__":
-    fetch_models()
-    generate_content()
+    api_key_value = get_api_key()
+    if api_key_value:
+        fetch_models(api_key_value)
+        generate_content(api_key_value)
