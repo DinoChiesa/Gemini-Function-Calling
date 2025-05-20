@@ -24,6 +24,7 @@ REPLACEMENTS = {
     "ENGLISH_WORDS": ENGLISH_WORDS
 }
 
+
 def get_api_key():
     """
     Reads the API key from the '.google-gemini-apikey' file.
@@ -153,8 +154,8 @@ def get_random_function_calling_payload():
         with open(selected_file_path, "r") as f:
             payload = json.load(f)
 
-        # TODO Modify this logic to replace placeholder words like :NAME and :ENGLISH_WORD
-        # with values selected at random from fixed lists. 
+        # AI! Modify this logic to replace placeholder words like :NAME and :ENGLISH_WORD
+        # with values selected at random from the lists in REPLACEMENTS. 
         return payload, selected_file_path
 
     except FileNotFoundError:
