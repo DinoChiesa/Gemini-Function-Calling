@@ -6,6 +6,8 @@ NAMES = [
 ]
 
 ENGLISH_WORDS = [
+    # AI! Augment this list with 7 nonsense words , like maybe taken from
+    # the Lewis Carroll peom "Jabberwocky", or similar fanciful texts.
     "Apple",           # A
     "Boredom",         # B
     "Cacophony",       # C
