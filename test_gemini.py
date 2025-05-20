@@ -139,9 +139,9 @@ def get_random_function_calling_payload():
 
         with open(selected_file_path, "r") as f:
             payload_str = f.read()
-        
+
         payload_str = replace_placeholders_in_string(payload_str, REPLACEMENTS)
-        
+
         payload = json.loads(payload_str) # Convert back to Python object
         return payload, selected_file_path
 
@@ -202,6 +202,7 @@ def invoke_with_function_calling(api_key):
             if "content" in first_candidate:
                 model_content_from_first_response = first_candidate["content"]
 
+        # AI! is this necessary? This variable isn't read until it is set again.
         extracted_api_calls = extract_function_calls_from_response(content_data_first_response)
 
         # Iterative function calling logic starts here.
@@ -221,14 +222,14 @@ def invoke_with_function_calling(api_key):
             if not extracted_api_calls:
                 print("No function calls found in the latest API response. Halting iteration.")
                 last_processed_api_response_json = current_api_response_json
-                break 
+                break
 
             model_content_part = None
             if current_api_response_json.get("candidates"):
                 candidate = current_api_response_json["candidates"][0]
                 if "content" in candidate:
                     model_content_part = candidate["content"]
-            
+
             if model_content_part:
                 ongoing_contents_list.append(model_content_part)
             else:
@@ -242,7 +243,7 @@ def invoke_with_function_calling(api_key):
                     target_function = KNOWN_FUNCTIONS[function_name]
                     args_dict = fc_from_api.get("args")
                     arg_values = list(args_dict.values()) if args_dict and isinstance(args_dict, dict) else []
-                    
+
                     try:
                         result = target_function(*arg_values)
                         args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
@@ -252,14 +253,14 @@ def invoke_with_function_calling(api_key):
                         if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
                         elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
                         else: response_content_for_tool["result"] = result
-                        
+
                         function_tool_response_parts.append({
                             "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
                         })
                     except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
                     except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
                 else: print(f"Function '{function_name}' is not a known invokable function.")
-            
+
             tool_response_section = {"role": "tool", "parts": function_tool_response_parts}
             ongoing_contents_list.append(tool_response_section)
 
@@ -270,7 +271,7 @@ def invoke_with_function_calling(api_key):
 
             next_api_call_payload_parts = {
                 "contents": ongoing_contents_list,
-                "tools": payload.get("tools"), 
+                "tools": payload.get("tools"),
                 "generation_config": payload.get("generation_config"),
                 "system_instruction": payload.get("system_instruction")
             }
@@ -279,22 +280,22 @@ def invoke_with_function_calling(api_key):
             print(f"\nMaking next API call (context for iteration {iteration_num + 2}):")
             # print(json.dumps(next_api_call_payload, indent=2, ensure_ascii=False)) # Optional: Log full payload
 
-            response_iter = None 
+            response_iter = None
             try:
                 response_iter = requests.post(url, json=next_api_call_payload, headers=headers)
                 response_iter.raise_for_status()
-                current_api_response_json = response_iter.json() 
-                last_processed_api_response_json = current_api_response_json 
+                current_api_response_json = response_iter.json()
+                last_processed_api_response_json = current_api_response_json
                 print(f"Response from API received.")
                 # print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False)) # Optional: Log full response
             except requests.exceptions.RequestException as e_req_iter:
                 print(f"RequestException during iterative call: {e_req_iter}")
                 if response_iter is not None: print(f"Response content: {response_iter.text}")
-                break 
+                break
             except json.JSONDecodeError as e_json_iter:
                 print(f"JSONDecodeError during iterative call: {e_json_iter}")
-                break 
-        
+                break
+
         print("\n--- Iterative Function Calling Process Ended ---")
         if last_processed_api_response_json:
             print("Final API Response (or last successfully processed response):")
@@ -302,7 +303,7 @@ def invoke_with_function_calling(api_key):
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred during the initial API call: {e}")
-        if 'response' in locals() and response is not None: 
+        if 'response' in locals() and response is not None:
             print(f"Response content: {response.text}")
     except json.JSONDecodeError:
         print("Failed to decode JSON from the initial API call response.")
