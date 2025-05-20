@@ -202,6 +202,28 @@ def invoke_with_function_calling(api_key):
         print("Failed to decode JSON from function calling response.")
         return []
 
+def get_max_scrabble_word_score(word):
+    """
+    Calculates a score for a word based on character values.
+    - Non-ASCII characters result in a score of 0.
+    - 'X' or 'Y' (uppercase) = 5 points
+    - 'E', 'S', 'T', 'A' (uppercase) = 1 point
+    - Other ASCII characters = 2 points
+    """
+    total_score = 0
+    for char_original in word:
+        char_upper = char_original.upper()
+        if not char_upper.isascii():
+            return 0  # Stop and return 0 if non-ASCII character is found
+        
+        if char_upper in ('X', 'Y'):
+            total_score += 5
+        elif char_upper in ('E', 'S', 'T', 'A'):
+            total_score += 1
+        else:
+            total_score += 2
+            
+    return total_score
 
 if __name__ == "__main__":
     api_key_value = get_api_key()
