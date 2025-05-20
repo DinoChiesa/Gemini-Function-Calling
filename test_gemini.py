@@ -42,6 +42,27 @@ def fetch_models(api_key):
         print(f"An error occurred: {e}")
     except json.JSONDecodeError:
         print("Failed to decode JSON from response.")
+        
+def get_is_known_word(candidate):
+    """
+    Checks the online dictionary to determine if the candidate is an actual word."
+    """
+
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{candidate}"
+
+    try:
+        response = requests.get(url)
+        # AI! Modify this to handle a 404 as a valid response, not an exception.
+        # In the case of 404, return false. In the case of a 200 status code return true.
+        # Any other status code, print an appropriate message and re-throw the exception.
+        response.raise_for_status()
+        models_data = response.json()
+        print(json.dumps(models_data, indent=2))
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+    except json.JSONDecodeError:
+        print("Failed to decode JSON from response.")
 
 def generate_content(api_key):
     """
