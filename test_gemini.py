@@ -7,6 +7,9 @@ import os
 BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
+
+# AI! Collect the NAMES and ENGLISH_WORDS lists into a Dict called REPLACEMENTS
+
 NAMES = [
     "Roberto", "Blake", "Carson", "Ali", "Sundar", "Suresh", "Surpreet",
     "Yinbang", "Cal", "Maria", "David", "Aisha", "Kenji"
