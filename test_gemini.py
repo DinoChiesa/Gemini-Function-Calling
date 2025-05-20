@@ -190,6 +190,10 @@ def invoke_with_function_calling(api_key):
 
     try:
         print(f"Invoking model with function calling payload from: {selected_file_path}...")
+
+        # AI! Reduce code redundancy. Refactor this logic and the loop that
+        # follows to use exactly ONE call to requests.post, within the loop. It
+        # should use the correct, current payload each time through the loop.
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         content_data_first_response = response.json()
