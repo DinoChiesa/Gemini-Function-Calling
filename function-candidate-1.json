@@ -1,0 +1,50 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Give me the maximum scrabble score for the word Xylophone as compared to the word Rabblerouser."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "get_max_scrabble_word_score",
+          "description": "Returns the maximum score for a given word in the game Scrabble (tm)",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "string",
+                "description": "The word to score"
+              }
+            },
+            "required": [
+              "candidate"
+            ]
+          }
+        },
+        {
+          "name": "get_is_known_word",
+          "description": "Returns true or false, indicating whether the candidate string is actually a word listed in the dictionary.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "string",
+                "description": "The word to check"
+              }
+            },
+            "required": [
+              "candidate"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
