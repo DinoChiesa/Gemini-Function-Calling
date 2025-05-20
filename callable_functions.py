@@ -1,10 +1,15 @@
 import requests
 import json
 
-def get_is_known_word(candidate):
+def get_is_known_word(*args):
     """
     Checks the online dictionary to determine if the candidate is an actual word."
+    Expects the candidate word as the first argument.
     """
+    if not args:
+        print("Error: get_is_known_word expects at least one argument (candidate word).")
+        return False
+    candidate = args[0]
 
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{candidate}"
 
@@ -33,14 +38,20 @@ def get_is_known_word(candidate):
         print(f"Failed to decode JSON from response for word '{candidate}'.")
         return False
 
-def get_max_scrabble_word_score(word):
+def get_max_scrabble_word_score(*args):
     """
     Calculates a score for a word based on character values.
+    Expects the word as the first argument.
     - Non-ASCII characters result in a score of 0.
     - 'X' or 'Y' (uppercase) = 5 points
     - 'E', 'S', 'T', 'A' (uppercase) = 1 point
     - Other ASCII characters = 2 points
     """
+    if not args:
+        print("Error: get_max_scrabble_word_score expects at least one argument (word).")
+        return 0
+    word = args[0]
+
     total_score = 0
     for char_original in word:
         char_upper = char_original.upper()

@@ -212,17 +212,33 @@ if __name__ == "__main__":
 
                 if function_name in KNOWN_FUNCTIONS:
                     target_function = KNOWN_FUNCTIONS[function_name]
-                    args = fc.get("args")
+                    args_dict = fc.get("args")
 
-                    if args and "candidate" in args: # Common argument key for both current functions
-                        candidate_arg = args["candidate"]
+                    if args_dict is not None and isinstance(args_dict, dict):
+                        # Extract values to be passed as positional arguments
+                        arg_values = list(args_dict.values())
                         try:
-                            result = target_function(candidate_arg)
-                            print(f"Result of {function_name}('{candidate_arg}'): {result}")
+                            # Call the function by unpacking the argument values
+                            result = target_function(*arg_values)
+                            # Create a string representation of arguments for printing
+                            args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
+                            print(f"Result of {function_name}({args_repr}): {result}")
+                        except TypeError as e:
+                            # This can happen if the number of arguments doesn't match the function signature
+                            print(f"TypeError calling {function_name} with arguments {arg_values}: {e}")
                         except Exception as e:
-                            print(f"Error calling {function_name} with '{candidate_arg}': {e}")
+                            print(f"Error calling {function_name} with arguments {arg_values}: {e}")
                     else:
-                        print(f"Could not call {function_name}, 'args' or 'candidate' key missing: {args}")
+                        # Handle cases where args is missing or not a dictionary
+                        # If the function expects no arguments, it might still be callable
+                        try:
+                            result = target_function() # Attempt to call with no args
+                            print(f"Result of {function_name}(): {result}")
+                        except TypeError as e:
+                             # This will catch if the function actually required arguments
+                            print(f"Could not call {function_name}: 'args' dictionary missing or invalid, and function may require arguments. Error: {e}")
+                        except Exception as e:
+                            print(f"Error calling {function_name} without arguments: {e}")
                 # else:
                 #     print(f"Function '{function_name}' is not a known invokable function.")
         else:
