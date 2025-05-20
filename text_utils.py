@@ -33,7 +33,9 @@ def replace_placeholders_in_string(text_content, replacements_map):
 
         if actual_placeholder_to_find:
             while actual_placeholder_to_find in text_content:
-                if word_list:  # Ensure the list is not empty
+                if word_list:
+                    # AI! make sure when randomly choosing a value from the list, that the value hasn't
+                    # been chosen previously for this text_content.
                     replacement_word = random.choice(word_list)
                     text_content = text_content.replace(actual_placeholder_to_find, replacement_word, 1)
                 else:
