@@ -184,59 +184,113 @@ def invoke_with_function_calling(api_key):
         print(f"Invoking model with function calling payload from: {selected_file_path}...")
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
-        content_data = response.json()
-        # print(json.dumps(content_data, indent=2)) # Original print of full response
+        content_data_first_response = response.json()
+        # print(json.dumps(content_data_first_response, indent=2)) # Original print of full response
 
-        function_calls= extract_function_calls_from_response(content_data)
-        if function_calls:
-            print("\nExtracted Function Calls:")
-            for fc in function_calls:
-                print(json.dumps(fc, indent=2))
-                function_name = fc.get("name")
+        original_payload_contents = payload.get("contents", [])
+        model_content_from_first_response = None
+        if content_data_first_response.get("candidates"):
+            first_candidate = content_data_first_response["candidates"][0]
+            if "content" in first_candidate:
+                model_content_from_first_response = first_candidate["content"]
+
+        extracted_api_calls = extract_function_calls_from_response(content_data_first_response)
+
+        if extracted_api_calls:
+            print("\nExtracted Function Calls from 1st response:")
+            function_tool_response_parts = [] # For the "parts" array of the tool response
+
+            for fc_from_api in extracted_api_calls:
+                print(json.dumps(fc_from_api, indent=2))
+                function_name = fc_from_api.get("name")
 
                 if function_name in KNOWN_FUNCTIONS:
                     target_function = KNOWN_FUNCTIONS[function_name]
-                    args_dict = fc.get("args")
+                    args_dict = fc_from_api.get("args")
+                    arg_values = []
 
                     if args_dict is not None and isinstance(args_dict, dict):
-                        # Extract values to be passed as positional arguments
                         arg_values = list(args_dict.values())
-                        try:
-                            # Call the function by unpacking the argument values
-                            result = target_function(*arg_values)
-                            # Create a string representation of arguments for printing
-                            args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
-                            print(f"Result of {function_name}({args_repr}): {result}")
-                        except TypeError as e:
-                            # This can happen if the number of arguments doesn't match the function signature
-                            print(f"TypeError calling {function_name} with arguments {arg_values}: {e}")
-                        except Exception as e:
-                            print(f"Error calling {function_name} with arguments {arg_values}: {e}")
-                    else:
-                        # Handle cases where args is missing or not a dictionary
-                        # If the function expects no arguments, it might still be callable
-                        try:
-                            result = target_function() # Attempt to call with no args
-                            print(f"Result of {function_name}(): {result}")
-                        except TypeError as e:
-                             # This will catch if the function actually required arguments
-                            print(f"Could not call {function_name}: 'args' dictionary missing or invalid, and function may require arguments. Error: {e}")
-                        except Exception as e:
-                            print(f"Error calling {function_name} without arguments: {e}")
-                # else:
-                #     print(f"Function '{function_name}' is not a known invokable function.")
-        else:
-            print("\nNo function calls extracted or an error occurred.")
+                    
+                    try:
+                        result = target_function(*arg_values)
+                        args_repr = ", ".join(f"'{str(arg)}'" for arg in arg_values)
+                        print(f"Result of local {function_name}({args_repr}): {result}")
 
+                        # Construct the content for the functionResponse part
+                        response_content_for_tool = args_dict.copy() if args_dict else {}
+                        if function_name == "get_max_scrabble_word_score":
+                            response_content_for_tool["score"] = result
+                        elif function_name == "get_is_known_word":
+                            response_content_for_tool["is_known"] = result
+                        else: # Generic result key if not specifically handled
+                            response_content_for_tool["result"] = result
+                        
+                        function_tool_response_parts.append({
+                            "functionResponse": {
+                                "name": function_name,
+                                "response": {
+                                    "content": response_content_for_tool
+                                }
+                            }
+                        })
+                    except TypeError as e:
+                        print(f"TypeError calling local function {function_name} with arguments {arg_values}: {e}")
+                    except Exception as e:
+                        print(f"Error calling local function {function_name} with arguments {arg_values}: {e}")
+                # else: (function_name not in KNOWN_FUNCTIONS)
+                #     print(f"Function '{function_name}' is not a known invokable function.")
+            
+            # Proceed to 2nd API call if there were successful local function calls that generated parts
+            if function_tool_response_parts:
+                second_payload_contents = list(original_payload_contents) # Start with original user content
+
+                if model_content_from_first_response: # Add model's response (that contained function calls)
+                    second_payload_contents.append(model_content_from_first_response)
+                
+                # Add the tool execution results
+                second_payload_contents.append({
+                    "role": "tool",
+                    "parts": function_tool_response_parts
+                })
+
+                second_api_payload = {}
+                if "tools" in payload:
+                    second_api_payload["tools"] = payload["tools"]
+                if "generation_config" in payload:
+                    second_api_payload["generation_config"] = payload["generation_config"]
+                if "system_instruction" in payload:
+                     second_api_payload["system_instruction"] = payload["system_instruction"]
+                second_api_payload["contents"] = second_payload_contents
+                
+                print("\nMaking 2nd API call with augmented payload:")
+                print(json.dumps(second_api_payload, indent=2,ensure_ascii=False))
+
+                try:
+                    response_second = requests.post(url, json=second_api_payload, headers=headers)
+                    response_second.raise_for_status()
+                    content_data_second = response_second.json()
+                    print("\nResponse from 2nd API call:")
+                    print(json.dumps(content_data_second, indent=2,ensure_ascii=False))
+                except requests.exceptions.RequestException as e_second:
+                    print(f"An error occurred during the 2nd API call: {e_second}")
+                    if response_second is not None:
+                        print(f"Response content: {response_second.text}")
+                except json.JSONDecodeError as e_json_second:
+                    print(f"Failed to decode JSON from the 2nd API call response: {e_json_second}")
+            else:
+                print("\nNo successful local function calls or results to form a 2nd API request.")
+        else:
+            print("\nNo function calls extracted from 1st response, skipping 2nd API call.")
             
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred during function calling invocation: {e}")
-        if response is not None:
+        print(f"An error occurred during the 1st API call: {e}")
+        if 'response' in locals() and response is not None: # check if response variable exists
             print(f"Response content: {response.text}")
-        return []
+        return [] # Return empty list as per original error handling
     except json.JSONDecodeError:
-        print("Failed to decode JSON from function calling response.")
-        return []
+        print("Failed to decode JSON from the 1st API call response.")
+        return [] # Return empty list as per original error handling
 
 from callable_functions import KNOWN_FUNCTIONS
 
