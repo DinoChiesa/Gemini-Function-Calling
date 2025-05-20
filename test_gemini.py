@@ -52,17 +52,28 @@ def get_is_known_word(candidate):
 
     try:
         response = requests.get(url)
-        # AI! Modify this to handle a 404 as a valid response, not an exception.
-        # In the case of 404, return false. In the case of a 200 status code return true.
-        # Any other status code, print an appropriate message and re-throw the exception.
-        response.raise_for_status()
-        models_data = response.json()
-        print(json.dumps(models_data, indent=2))
+        
+        if response.status_code == 200:
+            # Optionally, you might still want to see the JSON response for a known word
+            # models_data = response.json() 
+            # print(json.dumps(models_data, indent=2))
+            return True
+        elif response.status_code == 404:
+            return False
+        else:
+            # For any other status code, print a message and then raise the exception
+            print(f"Unexpected status code {response.status_code} for word '{candidate}': {response.text}")
+            response.raise_for_status() # This will re-throw an HTTPError for other bad statuses
 
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}")
+        # This will catch the re-thrown error from response.raise_for_status()
+        # or other network-related errors from requests.get()
+        print(f"An error occurred while checking word '{candidate}': {e}")
+        return False # Or re-raise, depending on desired error handling for network issues
     except json.JSONDecodeError:
-        print("Failed to decode JSON from response.")
+        # This might occur if a 200 response isn't valid JSON, though less likely for this API
+        print(f"Failed to decode JSON from response for word '{candidate}'.")
+        return False
 
 def generate_content(api_key):
     """
