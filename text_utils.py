@@ -39,22 +39,18 @@ def replace_placeholders_in_string(text_content, replacements_map):
             random.shuffle(available_words_for_this_key) # Shuffle to make pop() effectively random
 
             while actual_placeholder_to_find in text_content:
-                # AI! Modify this so that if there are no other available words,
-                # reset the list and begin again, silently. Print no warning.
                 if not available_words_for_this_key:
-                    print(f"Warning: Ran out of unique words for placeholder {actual_placeholder_to_find}. Some placeholders may remain.")
-                    break 
+                    if not word_list: # Original source list is empty, cannot refill.
+                        # Silently break as no more replacements are possible for this placeholder.
+                        break
+                    # Refill available_words_for_this_key from the original word_list
+                    available_words_for_this_key = list(word_list)
+                    random.shuffle(available_words_for_this_key)
+                    used_words_for_this_key.clear() # Reset used words for the new cycle
 
-                if word_list: # Original check, good to keep
-                    # Pick a word that hasn't been used yet for this key in this text_content
-                    # by popping from the shuffled list.
-                    replacement_word = available_words_for_this_key.pop()
-                    
-                    text_content = text_content.replace(actual_placeholder_to_find, replacement_word, 1)
-                    used_words_for_this_key.add(replacement_word) # Mark as used for this run
-                else:
-                    # This case (empty original word_list) should ideally be caught before the loop
-                    # or by the available_words_for_this_key check.
-                    print(f"Warning: Word list for {key} is empty, cannot replace {actual_placeholder_to_find}")
-                    break
+                # If word_list was empty, the break above would have been hit.
+                # So, if we are here, available_words_for_this_key is populated.
+                replacement_word = available_words_for_this_key.pop()
+                text_content = text_content.replace(actual_placeholder_to_find, replacement_word, 1)
+                used_words_for_this_key.add(replacement_word) # Track usage within the current cycle of available_words
     return text_content
