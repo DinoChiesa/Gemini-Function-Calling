@@ -32,18 +32,14 @@ def replace_placeholders_in_string(text_content, replacements_map):
         # Add more specific placeholder mappings here if needed
 
         if actual_placeholder_to_find:
-
-            # AI! refactor this so that the available_words_for_this_key variable
-            # is set only within the loop.  Set it to null or empty, so that the
-            # first time through the loop it gets initialized.
-            available_words_for_this_key = list(word_list)
-            random.shuffle(available_words_for_this_key) # Shuffle to make pop() effectively random
+            available_words_for_this_key = [] # Initialize as empty before the loop
 
             while actual_placeholder_to_find in text_content:
                 if not available_words_for_this_key:
                     if not word_list: # Original source list is empty, cannot refill.
                         # Silently break as no more replacements are possible for this placeholder.
                         break
+                    # Populate/Re-populate the list here
                     available_words_for_this_key = list(word_list)
                     random.shuffle(available_words_for_this_key)
 
