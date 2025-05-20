@@ -75,7 +75,7 @@ def get_is_known_word(candidate):
         print(f"Failed to decode JSON from response for word '{candidate}'.")
         return False
 
-    
+
 def generate_content(api_key):
     """
     Generates content using the Google Generative Language API via a POST request
@@ -269,11 +269,11 @@ if __name__ == "__main__":
             for fc in function_calls:
                 print(json.dumps(fc, indent=2))
                 function_name = fc.get("name")
-                
+
                 if function_name in KNOWN_FUNCTIONS:
                     target_function = KNOWN_FUNCTIONS[function_name]
                     args = fc.get("args")
-                    
+
                     if args and "candidate" in args: # Common argument key for both current functions
                         candidate_arg = args["candidate"]
                         try:
