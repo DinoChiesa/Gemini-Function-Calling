@@ -5,6 +5,8 @@ import glob
 import os
 import argparse
 
+from callable_functions import KNOWN_FUNCTIONS
+
 BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
@@ -350,9 +352,6 @@ def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
         else:
             print(f"Function '{function_name}' is not a known invokable function.")
     return function_tool_response_parts
-
-# AI! Does this belong here or is it better placed higher in the file?
-from callable_functions import KNOWN_FUNCTIONS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test script for Gemini API function calling. Verbose logging is on by default.")
