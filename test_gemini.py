@@ -201,11 +201,9 @@ def invoke_with_function_calling(api_key, verbose=False):
         # `current_payload_for_api_call` will be the payload sent in each iteration.
         # For the first iteration, it's the initial payload.
         current_payload_for_api_call = payload
-        
         initial_prompt_text = _get_text_from_payload(payload, type="initial_prompt")
-
         current_api_response_json = None
-        last_processed_api_response_json = None # Stores the last valid response before loop termination or error
+        last_processed_api_response_json = None
 
         max_iterations = 10
         for iteration_num in range(max_iterations):
@@ -221,7 +219,7 @@ def invoke_with_function_calling(api_key, verbose=False):
                 response_iter = requests.post(url, json=current_payload_for_api_call, headers=headers)
                 response_iter.raise_for_status()
                 current_api_response_json = response_iter.json()
-                last_processed_api_response_json = current_api_response_json # Update on successful call
+                last_processed_api_response_json = current_api_response_json
                 print(f"Response from API received.")
                 if verbose:
                     print("Response Payload:")
@@ -249,8 +247,8 @@ def invoke_with_function_calling(api_key, verbose=False):
             # Append the model's response (that contained function calls) to ongoing_contents_list
             # Only if it's not the very first iteration's user prompt (which is already there)
             if model_content_part and (iteration_num > 0 or ongoing_contents_list != [model_content_part]):
-                 # Check to avoid duplicating the model's response if it was already added
-                 # This logic might need refinement based on exact desired accumulation behavior
+                 # Check to avoid duplicating the model's response if it was already added.
+                 # This logic might need refinement based on exact desired accumulation behavior.
                 if not any(part == model_content_part for part in ongoing_contents_list):
                     ongoing_contents_list.append(model_content_part)
             elif not model_content_part:
@@ -286,17 +284,19 @@ def invoke_with_function_calling(api_key, verbose=False):
                 print(f"Initial Prompt: {initial_prompt_text}")
             else:
                 print("Initial Prompt: Could not extract.")
-            
+
             if final_response_text:
                 print(f"Final Response Text: {final_response_text}")
             else:
                 print("Final Response Text: Could not extract or not a text response.")
+            print("\n")
         else:
             print("No API response was successfully processed to be displayed as final.")
 
     except Exception as e: # Catch-all for other unexpected errors during setup
         print(f"An unexpected error occurred in invoke_with_function_calling: {e}")
-    # No explicit return here, function will return None if execution reaches end.
+
+
 
 def _get_text_from_payload(data, type="initial_prompt"):
     """Safely extracts text from payload structures."""
@@ -312,11 +312,11 @@ def _get_text_from_payload(data, type="initial_prompt"):
 def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
     """
     Executes local functions based on extracted API calls and formats their responses.
-    
+
     Args:
         extracted_api_calls: A list of function call objects from the API.
         known_functions_map: A dictionary mapping function names to callable functions.
-        
+
     Returns:
         A list of formatted function response parts for the API.
     """
@@ -341,16 +341,17 @@ def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
                 if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
                 elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
                 else: response_content_for_tool["result"] = result
-                
+
                 function_tool_response_parts.append({
                     "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
                 })
             except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
             except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
-        else: 
+        else:
             print(f"Function '{function_name}' is not a known invokable function.")
     return function_tool_response_parts
 
+# AI! Does this belong here or is it better placed higher in the file?
 from callable_functions import KNOWN_FUNCTIONS
 
 if __name__ == "__main__":
