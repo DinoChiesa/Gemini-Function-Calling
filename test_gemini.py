@@ -311,14 +311,14 @@ def invoke_with_function_calling(api_key, verbose=False):
 from callable_functions import KNOWN_FUNCTIONS
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test script for Gemini API function calling.")
-    # AI! flip the sense here. Instead of a --verbose flag, accept a --quiet flag, and default to "verbose" logging
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging of API requests and responses.")
+    parser = argparse.ArgumentParser(description="Test script for Gemini API function calling. Verbose logging is on by default.")
+    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
     args = parser.parse_args()
 
     api_key_value = get_api_key()
     if api_key_value:
-        invoke_with_function_calling(api_key_value, verbose=args.verbose)
+        # Verbose is true if --quiet is NOT specified
+        invoke_with_function_calling(api_key_value, verbose=(not args.quiet))
         # fetch_models(api_key_value)
         # for _ in range(3):
         #    generate_content(api_key_value)
