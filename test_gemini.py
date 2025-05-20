@@ -118,35 +118,47 @@ def generate_content(api_key):
     except json.JSONDecodeError:
         print("Failed to decode JSON from content generation response.")
 
+def get_random_function_calling_payload():
+    """
+    Selects a random function-candidate-*.json file from the current directory,
+    loads its JSON content, and returns the payload and the selected file path.
+    Returns (None, None) if an error occurs.
+    """
+    try:
+        candidate_files = glob.glob("function-candidate-*.json")
+        if not candidate_files:
+            print("No 'function-candidate-*.json' files found in the current directory.")
+            return None, None
+        
+        selected_file_path = random.choice(candidate_files)
+        print(f"\nSelected function calling payload file: {selected_file_path}")
+
+        with open(selected_file_path, "r") as f:
+            payload = json.load(f)
+        return payload, selected_file_path
+
+    except FileNotFoundError:
+        # This case should ideally not be reached if glob.glob worked and random.choice selected a valid file
+        print(f"Error: File {selected_file_path} not found after selection.")
+        return None, None
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from {selected_file_path}.")
+        return None, None
+    except Exception as e:
+        print(f"An error occurred while selecting or loading the payload: {e}")
+        return None, None
+
 def invoke_with_function_calling(api_key):
     """
-    Selects a random function-candidate-*.json file, sends its content to the
+    Gets a random function calling payload, sends its content to the
     Gemini API, and returns a list of extracted function calls.
     Each item in the list is a dictionary with "name" and "arguments".
     """
     if not api_key:
         return []
 
-    try:
-        candidate_files = glob.glob("function-candidate-*.json")
-        if not candidate_files:
-            print("No 'function-candidate-*.json' files found in the current directory.")
-            return []
-        
-        selected_file_path = random.choice(candidate_files)
-        print(f"\nSelected function calling payload: {selected_file_path}")
-
-        with open(selected_file_path, "r") as f:
-            payload = json.load(f)
-
-    except FileNotFoundError:
-        print(f"Error: File {selected_file_path} not found after selection (should not happen).")
-        return []
-    except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {selected_file_path}.")
-        return []
-    except Exception as e:
-        print(f"An error occurred while preparing the payload: {e}")
+    payload, selected_file_path = get_random_function_calling_payload()
+    if not payload:
         return []
 
     url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
