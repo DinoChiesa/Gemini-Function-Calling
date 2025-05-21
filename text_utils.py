@@ -83,3 +83,26 @@ def replace_placeholders_in_string(text_content, replacements_map):
             text_content = text_content.replace(placeholder, replacement_word, 1)
 
     return text_content
+
+def read_api_key_from_file(filename, key_description):
+    """
+    Reads an API key from the specified file.
+    Returns the API key as a string, or None if an error occurs.
+    
+    Args:
+        filename (str): The name of the file containing the API key.
+        key_description (str): A description of the API key for error messages (e.g., "Google Gemini API key").
+    """
+    try:
+        with open(filename, "r") as f:
+            api_key = f.read().strip()
+        if not api_key:
+            print(f"Error: {key_description} file '{filename}' is empty.")
+            return None
+        return api_key
+    except FileNotFoundError:
+        print(f"Error: {key_description} file '{filename}' not found.")
+        return None
+    except Exception as e:
+        print(f"Error reading {key_description} file '{filename}': {e}")
+        return None

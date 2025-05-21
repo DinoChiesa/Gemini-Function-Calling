@@ -1,22 +1,11 @@
 import requests
 import json
 import os # For reading API key
+from text_utils import read_api_key_from_file
 
 TOMTOM_BASE_URL = "https://api.tomtom.com"
 WEATHER_GOV_BASE_URL = "https://api.weather.gov"
 WEATHER_GOV_USER_AGENT = "python test_gemini"
-
-def _get_tomtom_apikey():
-    """Reads the TomTom API key from .tomtom-apikey file."""
-    try:
-        with open(".tomtom-apikey", "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        print("Error: TomTom API key file '.tomtom-apikey' not found.")
-        return None
-    except Exception as e:
-        print(f"Error reading TomTom API key file: {e}")
-        return None
 
 def get_weather_forecast(*args):
     """
@@ -30,7 +19,7 @@ def get_weather_forecast(*args):
         return {"error": error_msg}
     placename = args[0]
 
-    tomtom_apikey = _get_tomtom_apikey()
+    tomtom_apikey = read_api_key_from_file(".tomtom-apikey", "TomTom API key")
     if not tomtom_apikey:
         return {"error": "TomTom API key is missing or could not be read."}
 

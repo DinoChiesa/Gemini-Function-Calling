@@ -11,24 +11,8 @@ BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
 
-from text_utils import REPLACEMENTS, replace_placeholders_in_string
+from text_utils import REPLACEMENTS, replace_placeholders_in_string, read_api_key_from_file
 
-
-def get_api_key():
-    """
-    Reads the API key from the '.google-gemini-apikey' file.
-    Returns the API key as a string, or None if an error occurs.
-    """
-    try:
-        with open(".google-gemini-apikey", "r") as f:
-            api_key = f.read().strip()
-        return api_key
-    except FileNotFoundError:
-        print("Error: API key file '.google-gemini-apikey' not found.")
-        return None
-    except Exception as e:
-        print(f"Error reading API key file: {e}")
-        return None
 
 def fetch_models(api_key):
     """
@@ -362,7 +346,7 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
     args = parser.parse_args()
 
-    api_key_value = get_api_key()
+    api_key_value = read_api_key_from_file(".google-gemini-apikey", "Google Gemini API key")
     if api_key_value:
         # Verbose is true if --quiet is NOT specified
         invoke_with_function_calling(api_key_value, verbose=(not args.quiet))
