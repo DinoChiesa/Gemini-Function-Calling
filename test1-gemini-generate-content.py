@@ -68,10 +68,10 @@ def generate_content(api_key):
         {
             "instruction": "You are a nutritionist. You provide matter-of-fact information, in your thorough, explanatory answers.",
             "prompts": [
-                "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I Want to optimize for absorbtion and satiety.",
+                "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I want to optimize for absorption and satiety.",
                 "Should I consider an apple to be a good source of fiber? How much fiber should a healthy adult consume ddaily?",
                 "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply? About how many carbs would a normal 2500-calorie diet include?",
-                "What are the macro ratios I should shoot for in my daily diet, if I'm a normal healty adult male?"
+                "What are the ratios of macronutrients I should shoot for in my daily diet, if I'm a normal healty adult male?"
             ]
         }
     ]
