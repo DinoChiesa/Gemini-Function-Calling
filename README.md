@@ -96,7 +96,7 @@ OK let's get started.
 A simple API call to Gemini might look like this:
 
 ```
-POST :gemini/v1beta/models/:model:generateContent?key=:key
+POST :gemini/v1beta/models/:model:generateContent?key=:apikey
 Content-Type: application/json
 
 {
@@ -130,7 +130,7 @@ description of "tools" that THE APP can use to help the LLM respond to the user'
 A modified payload might look like this:
 
 ```
-POST :gemini/v1beta/models/:model/:generateContent?key=:key
+POST :gemini/v1beta/models/:model/:generateContent?key=:apikey
 Content-Type: application/json
 
 {
