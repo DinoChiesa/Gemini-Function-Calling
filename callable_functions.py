@@ -186,33 +186,43 @@ def get_is_known_word(*args):
         print(f"Failed to decode JSON from response for word '{candidate}'.")
         return False
 
-def get_max_scrabble_word_score(*args):
+def get_min_scrabble_word_score(*args):
     """
-    Calculates a score for a word based on character values.
+    Calculates a Scrabble score for a word based on standard letter values.
     Expects the word as the first argument.
     - Non-ASCII characters result in a score of 0.
-    - 'X' or 'Y' (uppercase) = 5 points
-    - 'E', 'S', 'T', 'A' (uppercase) = 1 point
-    - Other ASCII characters = 2 points
+    - Bonus of 1 point for each character over 9.
+    Letter scores:
+    (1 point) - A, E, I, L, N, O, R, S, T, U
+    (2 points) - D, G
+    (3 points) - B, C, M, P
+    (4 points) - F, H, V, W, Y
+    (5 points) - K
+    (8 points) - J, X
+    (10 points) - Q, Z
     """
     if not args:
-        print("Error: get_max_scrabble_word_score expects at least one argument (word).")
+        print("Error: get_min_scrabble_word_score expects at least one argument (word).")
         return 0
     word = args[0]
 
+    letter_scores = {
+        'A': 1, 'E': 1, 'I': 1, 'L': 1, 'N': 1, 'O': 1, 'R': 1, 'S': 1, 'T': 1, 'U': 1,
+        'D': 2, 'G': 2,
+        'B': 3, 'C': 3, 'M': 3, 'P': 3,
+        'F': 4, 'H': 4, 'V': 4, 'W': 4, 'Y': 4,
+        'K': 5,
+        'J': 8, 'X': 8,
+        'Q': 10, 'Z': 10
+    }
     total_score = 0
 
     for char_original in word:
         char_upper = char_original.upper()
         if not char_upper.isascii():
             return 0  # Stop and return 0 if non-ASCII character is found
-
-        if char_upper in ('X', 'Y'):
-            total_score += 5
-        elif char_upper in ('E', 'S', 'T', 'A'):
-            total_score += 1
-        else:
-            total_score += 2
+        
+        total_score += letter_scores.get(char_upper, 0) # Default to 0 for non-letters (though isascii should catch most)
 
     # Add bonus points for word length over 9 characters
     if len(word) > 9:
