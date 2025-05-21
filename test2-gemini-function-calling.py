@@ -12,10 +12,11 @@ BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 GEMINI_APIKEY_FILE = ".google-gemini-apikey"
 
-def _select_random_payload():
+def _select_random_payload(filename_filter=None):
     """
     Selects a random function candidate-*.json file from the config directory,
-    loads its JSON content, and returns the payload and the selected file path.
+    optionally filtering by a string in the filename.
+    Loads its JSON content, and returns the payload and the selected file path.
     Returns (None, None) if an error occurs.
     """
     try:
@@ -23,12 +24,19 @@ def _select_random_payload():
         file_pattern = "fn-*.json"
         search_path = os.path.join(config_dir_path, file_pattern)
 
-        candidate_files = glob.glob(search_path)
-        if not candidate_files:
+        all_candidate_files = glob.glob(search_path)
+        if not all_candidate_files:
             print(f"No '{file_pattern}' files found in the '{config_dir_path}' directory.")
             return None, None
 
-        selected_file_path = random.choice(candidate_files)
+        if filename_filter:
+            filtered_files = [f for f in all_candidate_files if filename_filter in os.path.basename(f)]
+            if not filtered_files:
+                print(f"No '{file_pattern}' files containing '{filename_filter}' found in '{config_dir_path}'.")
+                return None, None
+            selected_file_path = random.choice(filtered_files)
+        else:
+            selected_file_path = random.choice(all_candidate_files)
         print(f"\nSelected function calling payload file: {selected_file_path}")
 
         with open(selected_file_path, "r") as f:
@@ -74,7 +82,7 @@ def invoke_with_function_calling(api_key, verbose=False):
     if not api_key:
         return []
 
-    payload, selected_file_path = _select_random_payload()
+    payload, selected_file_path = _select_random_payload(filename_filter=kwargs.get('filename_filter'))
     if not payload:
         return []
 
@@ -248,10 +256,11 @@ def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test script for Gemini API function calling. Verbose logging is on by default.")
     parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
+    parser.add_argument("--filter", type=str, help="Filter payload files by a string contained in their filename.")
     args = parser.parse_args()
 
     api_key_value = read_text_from_file(GEMINI_APIKEY_FILE, "Google Gemini API key")
     if api_key_value:
-        invoke_with_function_calling(api_key_value, verbose=(not args.quiet))
+        invoke_with_function_calling(api_key_value, verbose=(not args.quiet), filename_filter=args.filter)
     else:
         print(f"No gemini API key found in '{GEMINI_APIKEY_FILE}'. Cannot continue.")
