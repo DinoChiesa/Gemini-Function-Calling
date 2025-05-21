@@ -78,7 +78,13 @@ def get_weather_forecast(*args):
                 print(error_msg)
                 return {"error": error_msg}
             print(f"Redirected to: {redirect_url}")
-            # AI! Check that the redirect_url is fully qualified; use a heuristic: if it begins with https:// , consider it to be fully qualified. If it is not, then prepend the WEATHER_GOV_BASE_URL to the redirect_url before performing the reuests.get. 
+            if not redirect_url.startswith("https://"):
+                print(f"Redirect URL '{redirect_url}' is not fully qualified. Prepending WEATHER_GOV_BASE_URL.")
+                redirect_url = f"{WEATHER_GOV_BASE_URL}{redirect_url}" # Ensure no double slashes if redirect_url starts with /
+                if not redirect_url.startswith(f"{WEATHER_GOV_BASE_URL}/") and redirect_url.startswith(f"{WEATHER_GOV_BASE_URL}"): # if it became https://api.weather.govrelative/path
+                    redirect_url = redirect_url.replace(f"{WEATHER_GOV_BASE_URL}",f"{WEATHER_GOV_BASE_URL}/",1)
+
+
             response_points = requests.get(redirect_url, headers=weather_headers)
 
         response_points.raise_for_status()
