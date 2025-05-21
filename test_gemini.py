@@ -132,11 +132,13 @@ def get_random_function_calling_payload():
     Returns (None, None) if an error occurs.
     """
     try:
-        # AI! modify this to look for files like "fn-*.json" in the config directory
-        # (Child of current directory). 
-        candidate_files = glob.glob("function-candidate-*.json")
+        config_dir_path = "config"
+        file_pattern = "fn-*.json"
+        search_path = os.path.join(config_dir_path, file_pattern)
+        
+        candidate_files = glob.glob(search_path)
         if not candidate_files:
-            print("No 'function-candidate-*.json' files found in the current directory.")
+            print(f"No '{file_pattern}' files found in the '{config_dir_path}' directory.")
             return None, None
 
         selected_file_path = random.choice(candidate_files)
