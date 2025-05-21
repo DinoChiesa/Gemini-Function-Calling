@@ -5,28 +5,36 @@ NAMES = [
     "Yinbang", "Cal", "Maria", "David", "Aisha", "Kenji"
 ]
 
+FOODS = [
+    "Broccoli", "Papaya", "Oatmeal"    , "Carrots", "Cabbage"
+]
+
 ENGLISH_WORDS = [
     "Apple",           # A
     "Boredom",         # B
+    "Borogoves",       # Nonsense
     "Brillig",         # Nonsense
     "Cacophony",       # C
     "Concrete",        # C (already present)
     "Dystopian",       # D
+    "Eledricious",     # Not-a-word
     "Ephemeral",       # E
     "Flummox",         # F
     "Gargantuan",      # G
     "Gimble",          # Nonsense
-    "Gyre",            # Nonsense
+    "Gyrattable",      # Not-a-word
     "Halcyon",         # H
     "Incandescent",    # I
     "Juxtaposition",   # J
     "Kaleidoscope",    # K
     "Labyrinth",       # L
+    "Manxome",         # Nonsense
     "Mellifluous",     # M
-    "Mimsy",           # Nonsense
+    "Mimserable",      # Not-a-word
     "Nefarious",       # N
     "Onomatopoeia",    # O
     "Parameter",       # P
+    "Pulsameter",      # Not-a-word
     "Quintessential",  # Q
     "Quixotic",        # Q (already present)
     "Rabblerouser",    # R
@@ -47,6 +55,7 @@ ENGLISH_WORDS.sort() # Ensure the list is sorted alphabetically
 
 REPLACEMENTS = {
     ":NAME": NAMES,
+    ":FOOD": FOODS,
     ":ENGLISH_WORD": ENGLISH_WORDS
 }
 
