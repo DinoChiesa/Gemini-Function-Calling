@@ -127,11 +127,13 @@ def generate_content(api_key):
 
 def get_random_function_calling_payload():
     """
-    Selects a random function-candidate-*.json file from the current directory,
+    Selects a random function candidate-*.json file from the config directory,
     loads its JSON content, and returns the payload and the selected file path.
     Returns (None, None) if an error occurs.
     """
     try:
+        # AI! modify this to look for files like "fn-*.json" in the config directory
+        # (Child of current directory). 
         candidate_files = glob.glob("function-candidate-*.json")
         if not candidate_files:
             print("No 'function-candidate-*.json' files found in the current directory.")
