@@ -1,6 +1,11 @@
 import requests
 import json
 
+
+def get_weather_forecast(*args):
+    # TODO: provide implementation
+
+
 def get_is_known_word(*args):
     """
     Checks the online dictionary to determine if the candidate is an actual word."
@@ -17,7 +22,7 @@ def get_is_known_word(*args):
         response = requests.get(url)
 
         if response.status_code == 200:
-            # Optionally, you might still want to see the JSON response for a known word
+            # Optionally, you might still want to see the JSON response for a known word.
             # models_data = response.json()
             # print(json.dumps(models_data, indent=2))
             return True
