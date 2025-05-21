@@ -1,0 +1,34 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+            "text": "What is the minimum word score for :ENGLISH_WORD in scrabble?"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "get_min_scrabble_word_score",
+          "description": "Returns the minimum score for a given word in the game Scrabble (tm)",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "string",
+                "description": "The word to score"
+              }
+            },
+            "required": [
+              "candidate"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

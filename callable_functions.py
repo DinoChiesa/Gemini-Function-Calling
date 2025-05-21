@@ -1,11 +1,27 @@
+# Copyright © 2025 Google LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import requests
 import json
-import os # For reading API key
+import os
 from text_utils import read_text_from_file
 
 TOMTOM_BASE_URL = "https://api.tomtom.com"
 WEATHER_GOV_BASE_URL = "https://api.weather.gov"
 WEATHER_GOV_USER_AGENT = "python test_gemini"
+TOMTOM_APIKEY_FILE = ".tomtom-apikey"
 
 def get_weather_forecast(*args):
     """
@@ -19,7 +35,7 @@ def get_weather_forecast(*args):
         return {"error": error_msg}
     placename = args[0]
 
-    tomtom_apikey = read_text_from_file(".tomtom-apikey", "TomTom API key")
+    tomtom_apikey = read_text_from_file(TOMTOM_APIKEY_FILE, "TomTom API key")
     if not tomtom_apikey:
         return {"error": "TomTom API key is missing or could not be read."}
 
@@ -148,44 +164,6 @@ def get_weather_forecast(*args):
         print(error_msg)
         return {"error": error_msg, "details": str(e)}
 
-
-def get_is_known_word(*args):
-    """
-    Checks the online dictionary to determine if the candidate is an actual word."
-    Expects the candidate word as the first argument.
-    """
-    if not args:
-        print("Error: get_is_known_word expects at least one argument (candidate word).")
-        return False
-    candidate = args[0]
-
-    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{candidate}"
-
-    try:
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            # Optionally, you might still want to see the JSON response for a known word.
-            # models_data = response.json()
-            # print(json.dumps(models_data, indent=2))
-            return True
-        elif response.status_code == 404:
-            return False
-        else:
-            # For any other status code, print a message and then raise the exception
-            print(f"Unexpected status code {response.status_code} for word '{candidate}': {response.text}")
-            response.raise_for_status() # This will re-throw an HTTPError for other bad statuses
-
-    except requests.exceptions.RequestException as e:
-        # This will catch the re-thrown error from response.raise_for_status()
-        # or other network-related errors from requests.get()
-        print(f"An error occurred while checking word '{candidate}': {e}")
-        return False # Or re-raise, depending on desired error handling for network issues
-    except json.JSONDecodeError:
-        # This might occur if a 200 response isn't valid JSON, though less likely for this API
-        print(f"Failed to decode JSON from response for word '{candidate}'.")
-        return False
-
 def get_min_scrabble_word_score(*args):
     """
     Calculates a Scrabble score for a word based on standard letter values.
@@ -231,9 +209,48 @@ def get_min_scrabble_word_score(*args):
 
     return total_score
 
+
+def get_is_known_word(*args):
+    """
+    Checks the online dictionary to determine if the candidate is an actual word."
+    Expects the candidate word as the first argument.
+    """
+    if not args:
+        print("Error: get_is_known_word expects at least one argument (candidate word).")
+        return False
+    candidate = args[0]
+
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{candidate}"
+
+    try:
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            # Optionally, you might still want to see the JSON response for a known word.
+            # models_data = response.json()
+            # print(json.dumps(models_data, indent=2))
+            return True
+        elif response.status_code == 404:
+            return False
+        else:
+            # For any other status code, print a message and then raise the exception
+            print(f"Unexpected status code {response.status_code} for word '{candidate}': {response.text}")
+            response.raise_for_status() # This will re-throw an HTTPError for other bad statuses
+
+    except requests.exceptions.RequestException as e:
+        # This will catch the re-thrown error from response.raise_for_status()
+        # or other network-related errors from requests.get()
+        print(f"An error occurred while checking word '{candidate}': {e}")
+        return False # Or re-raise, depending on desired error handling for network issues
+    except json.JSONDecodeError:
+        # This might occur if a 200 response isn't valid JSON, though less likely for this API
+        print(f"Failed to decode JSON from response for word '{candidate}'.")
+        return False
+
 KNOWN_FUNCTIONS = {
     "get_min_scrabble_word_score": get_min_scrabble_word_score,
     "get_is_known_word": get_is_known_word,
     "get_weather_forecast": get_weather_forecast,
     # Add other known functions here as they are defined
 }
+
