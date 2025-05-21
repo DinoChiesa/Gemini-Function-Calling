@@ -222,7 +222,7 @@ def get_max_scrabble_word_score(*args):
     return total_score
 
 KNOWN_FUNCTIONS = {
-    "get_max_scrabble_word_score": get_max_scrabble_word_score,
+    "get_min_scrabble_word_score": get_min_scrabble_word_score,
     "get_is_known_word": get_is_known_word,
     "get_weather_forecast": get_weather_forecast,
     # Add other known functions here as they are defined
