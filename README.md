@@ -283,14 +283,15 @@ You need these things:
 
 - to have python and pip installed on your machine
 
-- an API key for Gemini, that you can get for free at [Google AI Studio](https://aistudio.google.com/)
+- an API key for Gemini, that you can get for free at [Google AI Studio](https://aistudio.google.com/).
 
-  Store it in the file named ".google-gemini-apikey"
+  Store it in a file named ".google-gemini-apikey"
 
-- an API Key for TomTom, that you can get for free from [TomTom](https://developer.tomtom.com)
-  Register it for the Geocoding APIs.
+- an API Key for TomTom, that you can get for free from [TomTom](https://developer.tomtom.com).
 
-  Store it in the file named ".tomtom-apikey"
+  When you create the key, register it for the Geocoding APIs.
+
+  Store it in a file named ".tomtom-apikey"
 
 ## One time setup
 
@@ -326,10 +327,12 @@ The "tools" defined for this test include:
  - `get_min_scrabble_word_score` - even though Gemini can do this too.
  - `get_is_known_word` - this performs a dictionary lookup on a word candidate, to determine if it is a valid word to be scored in Scrabble.
 
+These are all implemented as functions that are known to the python script.
+
 When Gemini sends a response with "functionCall" in it, the script invokes the designated function call available locally.
 
-> This is python, which is a dynamic environment and invoking functions this way is pretty easy.
-> But the same approach would work with any app or environment that can conditionally invoke methods.
+> This is python, which is a dynamic environment and invoking functions by name this way is pretty easy.
+> But the same approach would work with any app or environment that can conditionally invoke methods, providing dynamic arguments to those methods.
 > It will work in Java, C#, Bash/curl, Powershell, Golang, etc.
 
 This script also prints the payloads sent in and out, during this exchange, to allow you to see
