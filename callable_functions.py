@@ -1,7 +1,7 @@
 import requests
 import json
 import os # For reading API key
-from text_utils import read_api_key_from_file
+from text_utils import read_text_from_file
 
 TOMTOM_BASE_URL = "https://api.tomtom.com"
 WEATHER_GOV_BASE_URL = "https://api.weather.gov"
@@ -19,7 +19,7 @@ def get_weather_forecast(*args):
         return {"error": error_msg}
     placename = args[0]
 
-    tomtom_apikey = read_api_key_from_file(".tomtom-apikey", "TomTom API key")
+    tomtom_apikey = read_text_from_file(".tomtom-apikey", "TomTom API key")
     if not tomtom_apikey:
         return {"error": "TomTom API key is missing or could not be read."}
 
@@ -38,13 +38,13 @@ def get_weather_forecast(*args):
             error_msg = f"No geocoding results found for '{placename}'."
             print(error_msg)
             return {"error": error_msg}
-        
+
         position = geocode_data["results"][0].get("position")
         if not position or "lat" not in position or "lon" not in position:
             error_msg = f"Could not extract lat/lon from TomTom response for '{placename}'."
             print(error_msg)
             return {"error": error_msg}
-            
+
         latitude = position["lat"]
         longitude = position["lon"]
         print(f"Got lat/lon: {latitude}, {longitude}")
@@ -70,7 +70,7 @@ def get_weather_forecast(*args):
     try:
         print(f"Fetching weather points for {latitude},{longitude} from Weather.gov...")
         response_points = requests.get(points_url, headers=weather_headers, allow_redirects=False) # Handle redirect manually
-        
+
         if response_points.status_code == 301: # Handle redirect
             redirect_url = response_points.headers.get("Location")
             if not redirect_url:
@@ -78,11 +78,12 @@ def get_weather_forecast(*args):
                 print(error_msg)
                 return {"error": error_msg}
             print(f"Redirected to: {redirect_url}")
+            # AI! Check that the redirect_url is fully qualified; use a heuristic: if it begins with https:// , consider it to be fully qualified. If it is not, then prepend the WEATHER_GOV_BASE_URL to the redirect_url before performing the reuests.get. 
             response_points = requests.get(redirect_url, headers=weather_headers)
-        
+
         response_points.raise_for_status()
         points_data = response_points.json()
-        
+
         forecast_grid_data_url = points_data.get("properties", {}).get("forecast")
         if not forecast_grid_data_url:
             error_msg = "Could not find 'properties.forecast' URL in Weather.gov points response."
@@ -115,7 +116,7 @@ def get_weather_forecast(*args):
             error_msg = "No forecast periods found in Weather.gov forecast response."
             print(error_msg)
             return {"error": error_msg}
-        
+
         first_period = periods[0]
         temperature = first_period.get("temperature")
         period_name = first_period.get("name")
@@ -141,6 +142,7 @@ def get_weather_forecast(*args):
         print(error_msg)
         return {"error": error_msg, "details": str(e)}
 
+    
 def get_is_known_word(*args):
     """
     Checks the online dictionary to determine if the candidate is an actual word."
