@@ -148,7 +148,7 @@ def get_weather_forecast(*args):
         print(error_msg)
         return {"error": error_msg, "details": str(e)}
 
-    
+
 def get_is_known_word(*args):
     """
     Checks the online dictionary to determine if the candidate is an actual word."
@@ -221,7 +221,7 @@ def get_min_scrabble_word_score(*args):
         char_upper = char_original.upper()
         if not char_upper.isascii():
             return 0  # Stop and return 0 if non-ASCII character is found
-        
+
         total_score += letter_scores.get(char_upper, 0) # Default to 0 for non-letters (though isascii should catch most)
 
     # Add bonus points for word length over 9 characters

@@ -1,0 +1,50 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+            "text": "If :NAME played the word :ENGLISH_WORD in scrabble, and :NAME played :ENGLISH_WORD, who scored higher? Make sure to consider valid only those words that are listed in the dictionary."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "get_min_scrabble_word_score",
+          "description": "Returns the minimum score for a given word in the game Scrabble (tm)",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "string",
+                "description": "The word to score"
+              }
+            },
+            "required": [
+              "candidate"
+            ]
+          }
+        },
+        {
+          "name": "get_is_known_word",
+          "description": "Returns true or false, indicating whether the candidate string is actually a word listed in the dictionary.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "string",
+                "description": "The word to check"
+              }
+            },
+            "required": [
+              "candidate"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

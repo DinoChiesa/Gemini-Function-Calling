@@ -11,7 +11,7 @@ BASE_API_URL = "https://generativelanguage.googleapis.com"
 TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
 
-from text_utils import REPLACEMENTS, replace_placeholders_in_string, read_api_key_from_file
+from text_utils import REPLACEMENTS, replace_placeholders_in_string, read_text_from_file
 
 
 def fetch_models(api_key):
@@ -109,7 +109,7 @@ def generate_content(api_key):
     except json.JSONDecodeError:
         print("Failed to decode JSON from content generation response.")
 
-def get_random_function_calling_payload():
+def _select_random_payload():
     """
     Selects a random function candidate-*.json file from the config directory,
     loads its JSON content, and returns the payload and the selected file path.
@@ -119,7 +119,7 @@ def get_random_function_calling_payload():
         config_dir_path = "config"
         file_pattern = "fn-*.json"
         search_path = os.path.join(config_dir_path, file_pattern)
-        
+
         candidate_files = glob.glob(search_path)
         if not candidate_files:
             print(f"No '{file_pattern}' files found in the '{config_dir_path}' directory.")
@@ -171,7 +171,7 @@ def invoke_with_function_calling(api_key, verbose=False):
     if not api_key:
         return []
 
-    payload, selected_file_path = get_random_function_calling_payload()
+    payload, selected_file_path = _select_random_payload()
     if not payload:
         return []
 
@@ -299,6 +299,7 @@ def _get_text_from_payload(data, type="initial_prompt"):
         return None
     return None
 
+
 def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
     """
     Executes local functions based on extracted API calls and formats their responses.
@@ -346,7 +347,7 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
     args = parser.parse_args()
 
-    api_key_value = read_api_key_from_file(".google-gemini-apikey", "Google Gemini API key")
+    api_key_value = read_text_from_file(".google-gemini-apikey", "Google Gemini API key")
     if api_key_value:
         # Verbose is true if --quiet is NOT specified
         invoke_with_function_calling(api_key_value, verbose=(not args.quiet))

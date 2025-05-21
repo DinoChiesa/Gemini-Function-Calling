@@ -4,7 +4,7 @@
       "role": "user",
       "parts": [
         {
-          "text": "Give me the maximum scrabble score for the word Xylophone as compared to the word Rabblerouser."
+            "text": "Give me the maximum Scrabble score for the word :ENGLISH_WORD as compared to the word :ENGLISH_WORD. Which offers the higher score? Keep in mind that only words that are listed in the dictionary are valid for Scrabble."
         }
       ]
     }
@@ -13,8 +13,8 @@
     {
       "functionDeclarations": [
         {
-          "name": "get_max_scrabble_word_score",
-          "description": "Returns the maximum score for a given word in the game Scrabble (tm)",
+          "name": "get_min_scrabble_word_score",
+          "description": "Returns the minimum score for a given word in the game Scrabble (tm)",
           "parameters": {
             "type": "object",
             "properties": {

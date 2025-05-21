@@ -5,8 +5,10 @@ NAMES = [
     "Yinbang", "Cal", "Maria", "David", "Aisha", "Kenji"
 ]
 
-FOODS = [
-    "Broccoli", "Papaya", "Oatmeal"    , "Carrots", "Cabbage"
+PLACES = [
+    "Chicago, IL", "Seattle, WA", "Indianapolis, IN", "Pittsburgh, PA", "Baltimore, MD",
+    "Portland, OR", "Portland, ME", "Frankfort, KY", "Louisville, KY", "Nashville, TN",
+    "Raleigh, NC"
 ]
 
 ENGLISH_WORDS = [
@@ -55,7 +57,7 @@ ENGLISH_WORDS.sort() # Ensure the list is sorted alphabetically
 
 REPLACEMENTS = {
     ":NAME": NAMES,
-    ":FOOD": FOODS,
+    ":PLACE": PLACES,
     ":ENGLISH_WORD": ENGLISH_WORDS
 }
 
@@ -84,14 +86,15 @@ def replace_placeholders_in_string(text_content, replacements_map):
 
     return text_content
 
-def read_api_key_from_file(filename, key_description):
+def read_text_from_file(filename, key_description):
     """
-    Reads an API key from the specified file.
-    Returns the API key as a string, or None if an error occurs.
+    Reads text from the specified file. This can be handy for loading in API Keys for
+    various services. The expectation is that the file contains a single line of text.
+    Returns the text as a string, or None if an error occurs.
     
     Args:
-        filename (str): The name of the file containing the API key.
-        key_description (str): A description of the API key for error messages (e.g., "Google Gemini API key").
+        filename (str): The name of the file containing the text
+        key_description (str): A description of the expected text value key for error messages (e.g., "Google Gemini API key").
     """
     try:
         with open(filename, "r") as f:

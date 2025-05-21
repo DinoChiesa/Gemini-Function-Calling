@@ -1,0 +1,34 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+            "text": "Will it be cooler in :PLACE or :PLACE tonight?"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "get_weather_forecast",
+          "description": "Returns weather forecast for a given place name",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "placename": {
+                "type": "string",
+                "description": "The name of the place for which to get the forecast"
+              }
+            },
+            "required": [
+              "placename"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
