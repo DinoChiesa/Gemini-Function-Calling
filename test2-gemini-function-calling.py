@@ -72,7 +72,7 @@ def extract_function_calls_from_response(response_data):
                         extracted_function_calls.append(part["functionCall"])
     return extracted_function_calls
 
-def invoke_with_function_calling(api_key, verbose=False):
+def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
     """
     Gets a random function calling payload, sends its content to the
     Gemini API, and returns a list of extracted function calls.
@@ -82,7 +82,7 @@ def invoke_with_function_calling(api_key, verbose=False):
     if not api_key:
         return []
 
-    payload, selected_file_path = _select_random_payload(filename_filter=kwargs.get('filename_filter'))
+    payload, selected_file_path = _select_random_payload(filename_filter=filename_filter)
     if not payload:
         return []
 
