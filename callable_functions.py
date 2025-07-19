@@ -13,15 +13,18 @@
 # limitations under the License.
 #
 
-import requests
 import json
 import os
+
+import requests
+
 from text_utils import read_text_from_file
 
 TOMTOM_BASE_URL = "https://api.tomtom.com"
 WEATHER_GOV_BASE_URL = "https://api.weather.gov"
 WEATHER_GOV_USER_AGENT = "python test_gemini"
-TOMTOM_APIKEY_FILE = ".tomtom-apikey"
+TOMTOM_APIKEY = os.environ.get("TOMTOM_APIKEY", "")
+
 
 def get_weather_forecast(*args):
     """
@@ -30,17 +33,20 @@ def get_weather_forecast(*args):
     Returns a dict with "temperature" and "periodName", or an error dict.
     """
     if not args:
-        error_msg = "Error: get_weather_forecast expects at least one argument (placename)."
+        error_msg = (
+            "Error: get_weather_forecast expects at least one argument (placename)."
+        )
         print(error_msg)
         return {"error": error_msg}
     placename = args[0]
 
-    tomtom_apikey = read_text_from_file(TOMTOM_APIKEY_FILE, "TomTom API key")
-    if not tomtom_apikey:
-        return {"error": "TomTom API key is missing or could not be read."}
+    if not TOMTOM_APIKEY:
+        return {
+            "error": "TomTom API key is missing or could not be read from environment TOMTOM_APIKEY."
+        }
 
     # 1. Get Lat/Lon from TomTom
-    geocode_url = f"{TOMTOM_BASE_URL}/search/2/geocode/{requests.utils.quote(placename)}.json?key={tomtom_apikey}"
+    geocode_url = f"{TOMTOM_BASE_URL}/search/2/geocode/{requests.utils.quote(placename)}.json?key={TOMTOM_APIKEY}"
     latitude = None
     longitude = None
 
@@ -57,7 +63,9 @@ def get_weather_forecast(*args):
 
         position = geocode_data["results"][0].get("position")
         if not position or "lat" not in position or "lon" not in position:
-            error_msg = f"Could not extract lat/lon from TomTom response for '{placename}'."
+            error_msg = (
+                f"Could not extract lat/lon from TomTom response for '{placename}'."
+            )
             print(error_msg)
             return {"error": error_msg}
 
@@ -74,7 +82,9 @@ def get_weather_forecast(*args):
         print(error_msg)
         return {"error": error_msg}
     except (KeyError, IndexError) as e:
-        error_msg = f"Unexpected structure in TomTom API response for '{placename}': {e}"
+        error_msg = (
+            f"Unexpected structure in TomTom API response for '{placename}': {e}"
+        )
         print(error_msg)
         return {"error": error_msg, "details": str(e)}
 
@@ -85,9 +95,11 @@ def get_weather_forecast(*args):
 
     try:
         print(f"Fetching weather points for {latitude},{longitude} from Weather.gov...")
-        response_points = requests.get(points_url, headers=weather_headers, allow_redirects=False) # Handle redirect manually
+        response_points = requests.get(
+            points_url, headers=weather_headers, allow_redirects=False
+        )  # Handle redirect manually
 
-        if response_points.status_code == 301: # Handle redirect
+        if response_points.status_code == 301:  # Handle redirect
             redirect_url = response_points.headers.get("Location")
             if not redirect_url:
                 error_msg = "Weather.gov points API redirected (301) but no Location header found."
@@ -95,11 +107,18 @@ def get_weather_forecast(*args):
                 return {"error": error_msg}
             print(f"Redirected to: {redirect_url}")
             if not redirect_url.startswith("https://"):
-                print(f"Redirect URL '{redirect_url}' is not fully qualified. Prepending WEATHER_GOV_BASE_URL.")
-                redirect_url = f"{WEATHER_GOV_BASE_URL}{redirect_url}" # Ensure no double slashes if redirect_url starts with /
-                if not redirect_url.startswith(f"{WEATHER_GOV_BASE_URL}/") and redirect_url.startswith(f"{WEATHER_GOV_BASE_URL}"): # if it became https://api.weather.govrelative/path
-                    redirect_url = redirect_url.replace(f"{WEATHER_GOV_BASE_URL}",f"{WEATHER_GOV_BASE_URL}/",1)
-
+                print(
+                    f"Redirect URL '{redirect_url}' is not fully qualified. Prepending WEATHER_GOV_BASE_URL."
+                )
+                redirect_url = f"{WEATHER_GOV_BASE_URL}{redirect_url}"  # Ensure no double slashes if redirect_url starts with /
+                if not redirect_url.startswith(
+                    f"{WEATHER_GOV_BASE_URL}/"
+                ) and redirect_url.startswith(
+                    f"{WEATHER_GOV_BASE_URL}"
+                ):  # if it became https://api.weather.govrelative/path
+                    redirect_url = redirect_url.replace(
+                        f"{WEATHER_GOV_BASE_URL}", f"{WEATHER_GOV_BASE_URL}/", 1
+                    )
 
             response_points = requests.get(redirect_url, headers=weather_headers)
 
@@ -129,7 +148,9 @@ def get_weather_forecast(*args):
     # 3. Get actual forecast
     try:
         print(f"Fetching actual forecast from: {forecast_grid_data_url}...")
-        response_forecast = requests.get(forecast_grid_data_url, headers=weather_headers)
+        response_forecast = requests.get(
+            forecast_grid_data_url, headers=weather_headers
+        )
         response_forecast.raise_for_status()
         forecast_data = response_forecast.json()
 
@@ -146,7 +167,10 @@ def get_weather_forecast(*args):
         if temperature is None or period_name is None:
             error_msg = "Could not extract temperature or period name from forecast."
             print(error_msg)
-            return {"error": error_msg, "details": "Missing 'temperature' or 'name' in first period."}
+            return {
+                "error": error_msg,
+                "details": "Missing 'temperature' or 'name' in first period.",
+            }
 
         print(f"Forecast for '{placename}': {period_name} - {temperature}F")
         return {"temperature": temperature, "periodName": period_name}
@@ -164,6 +188,7 @@ def get_weather_forecast(*args):
         print(error_msg)
         return {"error": error_msg, "details": str(e)}
 
+
 def get_min_scrabble_word_score(*args):
     """
     Calculates a Scrabble score for a word based on standard letter values.
@@ -180,18 +205,39 @@ def get_min_scrabble_word_score(*args):
     (10 points) - Q, Z
     """
     if not args:
-        print("Error: get_min_scrabble_word_score expects at least one argument (word).")
+        print(
+            "Error: get_min_scrabble_word_score expects at least one argument (word)."
+        )
         return 0
     word = args[0]
 
     letter_scores = {
-        'A': 1, 'E': 1, 'I': 1, 'L': 1, 'N': 1, 'O': 1, 'R': 1, 'S': 1, 'T': 1, 'U': 1,
-        'D': 2, 'G': 2,
-        'B': 3, 'C': 3, 'M': 3, 'P': 3,
-        'F': 4, 'H': 4, 'V': 4, 'W': 4, 'Y': 4,
-        'K': 5,
-        'J': 8, 'X': 8,
-        'Q': 10, 'Z': 10
+        "A": 1,
+        "E": 1,
+        "I": 1,
+        "L": 1,
+        "N": 1,
+        "O": 1,
+        "R": 1,
+        "S": 1,
+        "T": 1,
+        "U": 1,
+        "D": 2,
+        "G": 2,
+        "B": 3,
+        "C": 3,
+        "M": 3,
+        "P": 3,
+        "F": 4,
+        "H": 4,
+        "V": 4,
+        "W": 4,
+        "Y": 4,
+        "K": 5,
+        "J": 8,
+        "X": 8,
+        "Q": 10,
+        "Z": 10,
     }
     total_score = 0
 
@@ -200,7 +246,9 @@ def get_min_scrabble_word_score(*args):
         if not char_upper.isascii():
             return 0  # Stop and return 0 if non-ASCII character is found
 
-        total_score += letter_scores.get(char_upper, 0) # Default to 0 for non-letters (though isascii should catch most)
+        total_score += letter_scores.get(
+            char_upper, 0
+        )  # Default to 0 for non-letters (though isascii should catch most)
 
     # Add bonus points for word length over 9 characters
     if len(word) > 9:
@@ -216,7 +264,9 @@ def get_is_known_word(*args):
     Expects the candidate word as the first argument.
     """
     if not args:
-        print("Error: get_is_known_word expects at least one argument (candidate word).")
+        print(
+            "Error: get_is_known_word expects at least one argument (candidate word)."
+        )
         return False
     candidate = args[0]
 
@@ -234,18 +284,23 @@ def get_is_known_word(*args):
             return False
         else:
             # For any other status code, print a message and then raise the exception
-            print(f"Unexpected status code {response.status_code} for word '{candidate}': {response.text}")
-            response.raise_for_status() # This will re-throw an HTTPError for other bad statuses
+            print(
+                f"Unexpected status code {response.status_code} for word '{candidate}': {response.text}"
+            )
+            response.raise_for_status()  # This will re-throw an HTTPError for other bad statuses
 
     except requests.exceptions.RequestException as e:
         # This will catch the re-thrown error from response.raise_for_status()
         # or other network-related errors from requests.get()
         print(f"An error occurred while checking word '{candidate}': {e}")
-        return False # Or re-raise, depending on desired error handling for network issues
+        return (
+            False  # Or re-raise, depending on desired error handling for network issues
+        )
     except json.JSONDecodeError:
         # This might occur if a 200 response isn't valid JSON, though less likely for this API
         print(f"Failed to decode JSON from response for word '{candidate}'.")
         return False
+
 
 KNOWN_FUNCTIONS = {
     "get_min_scrabble_word_score": get_min_scrabble_word_score,
@@ -253,4 +308,3 @@ KNOWN_FUNCTIONS = {
     "get_weather_forecast": get_weather_forecast,
     # Add other known functions here as they are defined
 }
-

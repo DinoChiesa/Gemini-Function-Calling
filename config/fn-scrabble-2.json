@@ -4,7 +4,7 @@
       "role": "user",
       "parts": [
         {
-            "text": "If :NAME played the word :ENGLISH_WORD in scrabble, and :NAME played :ENGLISH_WORD, who scored higher? Make sure to consider valid only those words that are listed in the dictionary."
+          "text": "If :NAME played the word :ENGLISH_WORD in scrabble, and :NAME played :ENGLISH_WORD, who is likely to have scored higher, given the minimum word score? Make sure to consider valid only those words that are listed in the dictionary."
         }
       ]
     }
@@ -23,9 +23,7 @@
                 "description": "The word to score"
               }
             },
-            "required": [
-              "candidate"
-            ]
+            "required": ["candidate"]
           }
         },
         {
@@ -39,9 +37,7 @@
                 "description": "The word to check"
               }
             },
-            "required": [
-              "candidate"
-            ]
+            "required": ["candidate"]
           }
         }
       ]

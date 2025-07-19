@@ -4,7 +4,7 @@
       "role": "user",
       "parts": [
         {
-            "text": "Give me the maximum Scrabble score for the word :ENGLISH_WORD as compared to the word :ENGLISH_WORD. Which offers the higher score? Keep in mind that only words that are listed in the dictionary are valid for Scrabble."
+          "text": "Give me the minimum Scrabble score for the word :ENGLISH_WORD as compared to the word :ENGLISH_WORD. Which offers the higher minimum score? Keep in mind that only words that are listed in the dictionary are valid for Scrabble; candidates that aren't actually words would score 0."
         }
       ]
     }
@@ -23,9 +23,7 @@
                 "description": "The word to score"
               }
             },
-            "required": [
-              "candidate"
-            ]
+            "required": ["candidate"]
           }
         },
         {
@@ -39,9 +37,7 @@
                 "description": "The word to check"
               }
             },
-            "required": [
-              "candidate"
-            ]
+            "required": ["candidate"]
           }
         }
       ]

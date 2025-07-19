@@ -13,19 +13,27 @@
 # limitations under the License.
 #
 
-import requests
-import json
-import random
-import glob
-import os
 import argparse
+import glob
+import json
+import os
+import random
+
+import requests
+from dotenv import load_dotenv
 
 from callable_functions import KNOWN_FUNCTIONS
 
-BASE_API_URL = "https://generativelanguage.googleapis.com"
-TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
+load_dotenv()
 
-from text_utils import REPLACEMENTS, replace_placeholders_in_string, read_text_from_file
+BASE_API_URL = os.environ.get(
+    "BASE_API_URL", "https://generativelanguage.googleapis.com"
+)
+TEXT_MODEL_NAME = os.environ.get("TEXT_MODEL_NAME", "gemini-2.5-flash")
+GEMINI_APIKEY = os.environ.get("GEMINI_APIKEY", "")
+
+from text_utils import REPLACEMENTS, read_text_from_file, replace_placeholders_in_string
+
 
 def fetch_models(api_key):
     """
@@ -47,6 +55,7 @@ def fetch_models(api_key):
     except json.JSONDecodeError:
         print("Failed to decode JSON from response.")
 
+
 def generate_content(api_key):
     """
     Generates content using the Google Generative Language API via a POST request
@@ -55,15 +64,17 @@ def generate_content(api_key):
     if not api_key:
         return
 
-    url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
+    url = (
+        f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
+    )
 
     instruction_prompts = [
         {
             "instruction": "You are an expert travel advisor. You are helpful and polite.",
             "prompts": [
                 "If someone tells me <<Expect cool weather when you visit>>, speaking of Seattle in May, what would the expected temperature range be?",
-                "If I am visiting Seattle in June (I will be flying in), should I rent a car, or would it be better to take public transit and uber/lyft?"
-            ]
+                "If I am visiting Seattle in June (I will be flying in), should I rent a car, or would it be better to take public transit and uber/lyft?",
+            ],
         },
         {
             "instruction": "You are a nutritionist. You provide matter-of-fact information, in your thorough, explanatory answers.",
@@ -71,9 +82,9 @@ def generate_content(api_key):
                 "For a given amount of protein consumption, is it better for me if I consume it earlier in the day, or later in the day? I want to optimize for absorption and satiety.",
                 "Should I consider an apple to be a good source of fiber? How much fiber should a healthy adult consume ddaily?",
                 "About how many grams of carbohydrate does a medium sized <<Cosmic Crisp>> apple supply? About how many carbs would a normal 2500-calorie diet include?",
-                "What are the ratios of macronutrients I should shoot for in my daily diet, if I'm a normal healty adult male?"
-            ]
-        }
+                "What are the ratios of macronutrients I should shoot for in my daily diet, if I'm a normal healty adult male?",
+            ],
+        },
     ]
 
     selected_scenario = random.choice(instruction_prompts)
@@ -81,30 +92,12 @@ def generate_content(api_key):
     selected_prompt = random.choice(selected_scenario["prompts"])
 
     payload = {
-      "system_instruction": {
-        "parts": {
-          "text": selected_instruction
-        }
-      },
-      "contents": [
-        {
-          "role": "user",
-          "parts": [
-            {
-              "text": selected_prompt
-            }
-          ]
-        }
-      ],
-      "generation_config": {
-        "temperature": 1,
-        "topP": 1
-      }
+        "system_instruction": {"parts": {"text": selected_instruction}},
+        "contents": [{"role": "user", "parts": [{"text": selected_prompt}]}],
+        "generation_config": {"temperature": 1, "topP": 1},
     }
 
-    headers = {
-        "Content-Type": "application/json"
-    }
+    headers = {"Content-Type": "application/json"}
 
     try:
         print(f"\nGenerating content with model: {TEXT_MODEL_NAME}...")
@@ -123,14 +116,23 @@ def generate_content(api_key):
         print("Failed to decode JSON from content generation response.")
 
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test script for Gemini API function calling. Verbose logging is on by default.")
-    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
+    parser = argparse.ArgumentParser(
+        description="Test script for Gemini API content generation (w/o function calling). Verbose logging is on by default."
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Disable verbose logging of API requests and responses.",
+    )
     args = parser.parse_args()
-    api_key_value = read_text_from_file(".google-gemini-apikey", "Google Gemini API key")
-    if api_key_value:
-        # Verbose is true if --quiet is NOT specified
-        fetch_models(api_key_value)
-        for _ in range(3):
-           generate_content(api_key_value)
+
+    if not GEMINI_APIKEY:
+        print(
+            f"No gemini API key found in environment 'GEMINI_APIKEY'. Cannot continue."
+        )
+        raise SystemExit
+
+    fetch_models(GEMINI_APIKEY)
+    for _ in range(3):
+        generate_content(GEMINI_APIKEY)

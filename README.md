@@ -17,7 +17,7 @@ these questions:
 
 This is because the latest Gemini models are augmenting the LLM capabilities
 with Google Search. So while a given Gemini model might be "frozen" based on its
-training date, it can query external tools now.
+training date, it can query at least _some_ external tools now.
 
 _But_ Gemini obviously cannot directly plug into systems or services that are local to your environment.
 
@@ -172,9 +172,9 @@ Content-Type: application/json
 (Actually, [Gemini](https://gemini.google.com) is smart enough to figure out
 Scrabble word scores, too, but let's just put that aside for the moment.)
 
-When you send that request to Gemini, you can get a response like the following:
+When you send that request to Gemini, you _can_ get a response like the following:
 
-```
+```json
 {
   "candidates": [
     {
@@ -211,24 +211,35 @@ When you send that request to Gemini, you can get a response like the following:
 }
 ```
 
-Basically, this is Gemini saying to _your app_: please invoke that function you
+Notice the `$.candidates[0].content.parts[0].functionCall` in the response.  This is Gemini saying to _your app_: please invoke that function you
 told me about, with these arguments.  If your app is designed correctly, it
 invokes the function locally, and then passes back information to Gemini about
-the results. That information must be added to the original prompt, structured
-like so:
+the results, along with original prompt, and Gemini's instruction to call the function, in order.
+
+The resulting structure is like this:
+
+```json
+{
+  "contents": [
+    ORIGINAL PROMPT
+    INSTRUCTION TO CALL TOOL
+    RESULT FROM TOOL
+  ]
+  ...
+}
+```
+
+It looks like so:
 
 ```json
 {
   "contents": [
     {
       "role": "user",
-      "parts": [
-        {
-          "text": "In Scrabble, what is the minimum score for the word Rabblerouser?"
-        }
-      ]
+      "parts": [ { "text": "In Scrabble, what is the minimum score for the word Rabblerouser?" } ]
     },
     {
+      "role": "model",
       "parts": [
         {
           "functionCall": {
@@ -238,8 +249,7 @@ like so:
             }
           }
         }
-      ],
-      "role": "model"
+      ]
     },
     {
       "role": "tool",
@@ -266,16 +276,21 @@ In that payload, you're giving Gemini the original prompt, PLUS the thing it
 asked for, PLUS the data you collected at its request.
 
 And then Gemini can assemble and digest all of that information and provide back
-a coherent response. This back-and-forth can continue for multiple
-iterations. If Gemini thinks that invoking the tools your app has access too,
-can help produce a correct answer, it will tell your app that, by sending back
-"functionCall" elements in the response as shown above.
+another coherent response. This back-and-forth can continue for multiple
+iterations. In each response, if Gemini thinks (a) that it does not have enough
+information to provide a complete response, and (b) that invoking the tools your
+app has access to, can help produce a correct answer, it will tell your app
+that, by sending back "functionCall" elements in the response as shown above.
 
-So, depending on the number of tools you register and the query you pass in,
-your app may need to iterate a few times, going back and forth with Gemini,
-before Gemini gives a final answer.
+Depending on the number of tools you register and the query you pass in, your
+app may need to iterate a few times, going back and forth with Gemini, before
+Gemini gives a final answer. This is called the Reasoning/Action loop, aka ReAct
+loop.
 
-The example code here shows that.
+The example code here shows that. On each successive iteration it shows what it
+sends back to Gemini, and what Gemini sends in return.  It'a a good way to gain
+insight into how this tools thing works.
+
 
 ## Trying the code - Pre-requisites
 
@@ -285,22 +300,24 @@ You need these things:
 
 - an API key for Gemini, that you can get for free at [Google AI Studio](https://aistudio.google.com/).
 
-  Store it in a file named ".google-gemini-apikey"
-
 - an API Key for TomTom, that you can get for free from [TomTom](https://developer.tomtom.com).
 
   When you create the key, register it for the Geocoding APIs.
 
-  Store it in a file named ".tomtom-apikey"
+- store the keys in a file named `.env`. It should be formatted like this:
+  ```sh
+  TOMTOM_APIKEY=value-you-got-from-tomtom
+  GEMINI_APIKEY=value-you-got-from-Google-AI-Studio
+  ```
 
 ## One time setup
 
 Make a new directory. Set up a venv for python.
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install requests
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Run the basic "generate content" test
@@ -308,18 +325,19 @@ pip install requests
 This will select one of a fixed set of prompts, send it to Gemini, and display the results.
 
 ```bash
-python3 test1-gemini-generate-content.py
+python3 ./test1-gemini-generate-content.py
 ```
 
-Interesting, but _not function calling_.
+This is just an app using the REST API for Gemini.
 
 
 ## Run the function calling test
 
-This will select a function calling prompt, and engage in the back-and-forth with Gemini, and finally display the final Result:
+This will select a function calling prompt, and engage in the back-and-forth
+with Gemini, and finally display the final result:
 
 ```bash
-python3 test2-gemini-function-calling.py
+python3 ./test2-gemini-function-calling.py
 ```
 
 The "tools" defined for this test include:
@@ -329,14 +347,17 @@ The "tools" defined for this test include:
 
 These are all implemented as functions that are known to the python script.
 
-When Gemini sends a response with "functionCall" in it, the script invokes the designated function call available locally.
+When Gemini sends a response with "functionCall" in it, the script invokes the
+designated function call available locally.
 
-> This is python, which is a dynamic environment and invoking functions by name this way is pretty easy.
-> But the same approach would work with any app or environment that can conditionally invoke methods, providing dynamic arguments to those methods.
-> It will work in Java, C#, Bash/curl, Powershell, Golang, etc.
+> This is python, which is a dynamic environment and invoking functions by name
+> this way is pretty easy.  But the same approach would work with any app or
+> environment that can conditionally invoke methods, providing dynamic arguments
+> to those methods.  It will work in Java, C#, Bash/curl, Powershell, Golang,
+> etc.
 
-This script also prints the payloads sent in and out, during this exchange, to allow you to see
-what's happening.
+This script also prints the payloads sent in and out, during this exchange, to
+allow you to see what's happening.
 
 When using a scrabble-oriented question, Gemini sends back a request to call the
 `get_is_known_word` function, and after the app sends back the answer from that,
@@ -358,12 +379,13 @@ It can do ... lots of things. Anything you can implement in software.
 
 Agentic AI is... just this. It's connecting invokable functions to a LLM.  The
 idea behind _an agent_ is not limited to supplying more context to the LLM, but
-extends to "performing work". Performing an update, or playing a playlist, or
-opening the garage door, and so on.  But the interaction model is basically the same: 
+extends to "performing work". Performing a database update, or playing a music
+playlist, or opening the garage door, and so on.  But the interaction model is
+basically the same:
 
  - the app collects a "prompt", sends it to the LLM
- - the LLM may respond with a request for more information , or , in the case of an 
-   agent scenario, the LLM may respond with a requested ACTION to perform. 
+ - the LLM may respond with a request for more information, or, in the case of an
+   agent scenario, the LLM may respond with a requested ACTION to perform.
  - the app then sends results back up to the LLM
  - this back-and-forth cycle may continue
 
@@ -387,8 +409,21 @@ when Gemini supports it. At the I/O Event for 2025, Google announced that
 MCP](https://blog.google/technology/google-deepmind/google-gemini-updates-io-2025/#performance). This
 will be coming soon.
 
-Maybe when that's out I'll deliver a Gemini + MCP example.
+While MCP defines how to register tools with an agent, _it won't change how the
+agent talks to the LLM_.  The agent will still send up a payload with
 
+```
+  "tools": [
+    {
+      "functionDeclarations": [
+      ...
+```
+
+...in it, but those `functionDeclaration` things will be obtained from the MCP
+Servers that are available, rather than from hard-coded names of local python
+functions.
+
+That's how a chatbot that supports MCP, talks to Gemini.
 
 ## Interesting Note
 

@@ -13,19 +13,26 @@
 # limitations under the License.
 #
 
-import requests
-import json
-import random
-import glob
-import os
 import argparse
+import glob
+import json
+import os
+import random
 
-from text_utils import REPLACEMENTS, replace_placeholders_in_string, read_text_from_file
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from callable_functions import KNOWN_FUNCTIONS
+from text_utils import REPLACEMENTS, read_text_from_file, replace_placeholders_in_string
 
-BASE_API_URL = "https://generativelanguage.googleapis.com"
-TEXT_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
-GEMINI_APIKEY_FILE = ".google-gemini-apikey"
+BASE_API_URL = os.environ.get(
+    "BASE_API_URL", "https://generativelanguage.googleapis.com"
+)
+TEXT_MODEL_NAME = os.environ.get("TEXT_MODEL_NAME", "gemini-2.5-flash")
+GEMINI_APIKEY = os.environ.get("GEMINI_APIKEY", "")
+
 
 def _select_random_payload(filename_filter=None):
     """
@@ -41,13 +48,19 @@ def _select_random_payload(filename_filter=None):
 
         all_candidate_files = glob.glob(search_path)
         if not all_candidate_files:
-            print(f"No '{file_pattern}' files found in the '{config_dir_path}' directory.")
+            print(
+                f"No '{file_pattern}' files found in the '{config_dir_path}' directory."
+            )
             return None, None
 
         if filename_filter:
-            filtered_files = [f for f in all_candidate_files if filename_filter in os.path.basename(f)]
+            filtered_files = [
+                f for f in all_candidate_files if filename_filter in os.path.basename(f)
+            ]
             if not filtered_files:
-                print(f"No '{file_pattern}' files containing '{filename_filter}' found in '{config_dir_path}'.")
+                print(
+                    f"No '{file_pattern}' files containing '{filename_filter}' found in '{config_dir_path}'."
+                )
                 return None, None
             selected_file_path = random.choice(filtered_files)
         else:
@@ -59,7 +72,7 @@ def _select_random_payload(filename_filter=None):
 
         payload_str = replace_placeholders_in_string(payload_str, REPLACEMENTS)
 
-        payload = json.loads(payload_str) # Convert back to Python object
+        payload = json.loads(payload_str)  # Convert back to Python object
         return payload, selected_file_path
 
     except FileNotFoundError:
@@ -72,6 +85,7 @@ def _select_random_payload(filename_filter=None):
     except Exception as e:
         print(f"An error occurred while selecting or loading the payload: {e}")
         return None, None
+
 
 def extract_function_calls_from_response(response_data):
     """
@@ -87,6 +101,7 @@ def extract_function_calls_from_response(response_data):
                         extracted_function_calls.append(part["functionCall"])
     return extracted_function_calls
 
+
 def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
     """
     Gets a random function calling payload, sends its content to the
@@ -97,17 +112,21 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
     if not api_key:
         return []
 
-    payload, selected_file_path = _select_random_payload(filename_filter=filename_filter)
+    payload, selected_file_path = _select_random_payload(
+        filename_filter=filename_filter
+    )
     if not payload:
         return []
 
-    url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
-    headers = {
-        "Content-Type": "application/json"
-    }
+    url = (
+        f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
+    )
+    headers = {"Content-Type": "application/json"}
 
     try:
-        print(f"Starting iterative function calling with payload from: {selected_file_path}...")
+        print(
+            f"Starting iterative function calling with payload from: {selected_file_path}..."
+        )
 
         # `payload` is the original full payload used for the first call.
         # `ongoing_contents_list` will accumulate parts for subsequent calls.
@@ -131,27 +150,42 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
                 print(f"Making API call for iteration {iteration_num + 1}...")
                 if verbose:
                     print("Request Payload:")
-                    print(json.dumps(current_payload_for_api_call, indent=2, ensure_ascii=False))
-                response_iter = requests.post(url, json=current_payload_for_api_call, headers=headers)
+                    print(
+                        json.dumps(
+                            current_payload_for_api_call, indent=2, ensure_ascii=False
+                        )
+                    )
+                response_iter = requests.post(
+                    url, json=current_payload_for_api_call, headers=headers
+                )
                 response_iter.raise_for_status()
                 current_api_response_json = response_iter.json()
                 last_processed_api_response_json = current_api_response_json
                 print(f"Response from API received.")
                 if verbose:
                     print("Response Payload:")
-                    print(json.dumps(current_api_response_json, indent=2, ensure_ascii=False))
+                    print(
+                        json.dumps(
+                            current_api_response_json, indent=2, ensure_ascii=False
+                        )
+                    )
             except requests.exceptions.RequestException as e_req_iter:
                 print(f"RequestException during API call: {e_req_iter}")
-                if response_iter is not None: print(f"Response content: {response_iter.text}")
-                break # Exit loop on API error
+                if response_iter is not None:
+                    print(f"Response content: {response_iter.text}")
+                break  # Exit loop on API error
             except json.JSONDecodeError as e_json_iter:
                 print(f"JSONDecodeError during API call: {e_json_iter}")
-                break # Exit loop on API error
+                break  # Exit loop on API error
 
-            extracted_api_calls = extract_function_calls_from_response(current_api_response_json)
+            extracted_api_calls = extract_function_calls_from_response(
+                current_api_response_json
+            )
 
             if not extracted_api_calls:
-                print("No function calls found in the latest API response. Halting iteration.")
+                print(
+                    "No function calls found in the latest API response. Halting iteration."
+                )
                 break
 
             model_content_part = None
@@ -162,38 +196,63 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
 
             # Append the model's response (that contained function calls) to ongoing_contents_list
             # Only if it's not the very first iteration's user prompt (which is already there)
-            if model_content_part and (iteration_num > 0 or ongoing_contents_list != [model_content_part]):
-                 # Check to avoid duplicating the model's response if it was already added.
-                 # This logic might need refinement based on exact desired accumulation behavior.
-                if not any(part == model_content_part for part in ongoing_contents_list):
+            if model_content_part and (
+                iteration_num > 0 or ongoing_contents_list != [model_content_part]
+            ):
+                # Check to avoid duplicating the model's response if it was already added.
+                # This logic might need refinement based on exact desired accumulation behavior.
+                if not any(
+                    part == model_content_part for part in ongoing_contents_list
+                ):
                     ongoing_contents_list.append(model_content_part)
             elif not model_content_part:
-                print("Warning: Could not find model's content part in the current response to append.")
+                print(
+                    "Warning: Could not find model's content part in the current response to append."
+                )
 
-            function_tool_response_parts = execute_and_format_tool_calls(extracted_api_calls, KNOWN_FUNCTIONS)
+            function_tool_response_parts = execute_and_format_tool_calls(
+                extracted_api_calls, KNOWN_FUNCTIONS
+            )
 
-            tool_response_section = {"role": "tool", "parts": function_tool_response_parts}
+            tool_response_section = {
+                "role": "tool",
+                "parts": function_tool_response_parts,
+            }
             ongoing_contents_list.append(tool_response_section)
 
             if iteration_num == max_iterations - 1:
-                print("\nMax iterations reached. The current response is considered final.")
+                print(
+                    "\nMax iterations reached. The current response is considered final."
+                )
                 break
 
             # Prepare payload for the next iteration
             next_api_call_payload_parts = {
                 "contents": ongoing_contents_list,
-                "tools": payload.get("tools"), # Use original tools definition
-                "generation_config": payload.get("generation_config"), # Use original gen config
-                "system_instruction": payload.get("system_instruction") # Use original system instruction
+                "tools": payload.get("tools"),  # Use original tools definition
+                "generation_config": payload.get(
+                    "generation_config"
+                ),  # Use original gen config
+                "system_instruction": payload.get(
+                    "system_instruction"
+                ),  # Use original system instruction
             }
-            current_payload_for_api_call = {k: v for k, v in next_api_call_payload_parts.items() if v is not None}
+            current_payload_for_api_call = {
+                k: v for k, v in next_api_call_payload_parts.items() if v is not None
+            }
 
         print("\n--- Iterative Function Calling Process Ended ---")
         if last_processed_api_response_json:
             print("Final API Response (or last successfully processed response):")
-            print(json.dumps(last_processed_api_response_json, indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    last_processed_api_response_json, indent=2, ensure_ascii=False
+                )
+            )
 
-            final_response_text = _get_text_from_payload(last_processed_api_response_json, type="final_response")
+            final_response_text = _get_text_from_payload(
+                last_processed_api_response_json, type="final_response"
+            )
 
             print("\n--- Summary ---")
             if initial_prompt_text:
@@ -207,11 +266,12 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
                 print("Final Response Text: Could not extract or not a text response.")
             print("\n")
         else:
-            print("No API response was successfully processed to be displayed as final.")
+            print(
+                "No API response was successfully processed to be displayed as final."
+            )
 
-    except Exception as e: # Catch-all for other unexpected errors during setup
+    except Exception as e:  # Catch-all for other unexpected errors during setup
         print(f"An unexpected error occurred in invoke_with_function_calling: {e}")
-
 
 
 def _get_text_from_payload(data, type="initial_prompt"):
@@ -247,7 +307,11 @@ def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
         if function_name in known_functions_map:
             target_function = known_functions_map[function_name]
             args_dict = fc_from_api.get("args")
-            arg_values = list(args_dict.values()) if args_dict and isinstance(args_dict, dict) else []
+            arg_values = (
+                list(args_dict.values())
+                if args_dict and isinstance(args_dict, dict)
+                else []
+            )
 
             try:
                 result = target_function(*arg_values)
@@ -255,27 +319,54 @@ def execute_and_format_tool_calls(extracted_api_calls, known_functions_map):
                 print(f"Result of local {function_name}({args_repr}): {result}")
 
                 response_content_for_tool = args_dict.copy() if args_dict else {}
-                if function_name == "get_max_scrabble_word_score": response_content_for_tool["score"] = result
-                elif function_name == "get_is_known_word": response_content_for_tool["is_known"] = result
-                else: response_content_for_tool["result"] = result
+                if function_name == "get_max_scrabble_word_score":
+                    response_content_for_tool["score"] = result
+                elif function_name == "get_is_known_word":
+                    response_content_for_tool["is_known"] = result
+                else:
+                    response_content_for_tool["result"] = result
 
-                function_tool_response_parts.append({
-                    "functionResponse": {"name": function_name, "response": {"content": response_content_for_tool}}
-                })
-            except TypeError as e_type: print(f"TypeError calling local {function_name} with {arg_values}: {e_type}")
-            except Exception as e_exc: print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
+                function_tool_response_parts.append(
+                    {
+                        "functionResponse": {
+                            "name": function_name,
+                            "response": {"content": response_content_for_tool},
+                        }
+                    }
+                )
+            except TypeError as e_type:
+                print(
+                    f"TypeError calling local {function_name} with {arg_values}: {e_type}"
+                )
+            except Exception as e_exc:
+                print(f"Error calling local {function_name} with {arg_values}: {e_exc}")
         else:
             print(f"Function '{function_name}' is not a known invokable function.")
     return function_tool_response_parts
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test script for Gemini API function calling. Verbose logging is on by default.")
-    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging of API requests and responses.")
-    parser.add_argument("--filter", type=str, help="Filter payload files by a string contained in their filename.")
+    parser = argparse.ArgumentParser(
+        description="Test script for Gemini API function calling. Verbose logging is on by default."
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Disable verbose logging of API requests and responses.",
+    )
+    parser.add_argument(
+        "--filter",
+        type=str,
+        help="Filter payload files by a string contained in their filename.",
+    )
     args = parser.parse_args()
 
-    api_key_value = read_text_from_file(GEMINI_APIKEY_FILE, "Google Gemini API key")
-    if api_key_value:
-        invoke_with_function_calling(api_key_value, verbose=(not args.quiet), filename_filter=args.filter)
-    else:
-        print(f"No gemini API key found in '{GEMINI_APIKEY_FILE}'. Cannot continue.")
+    if not GEMINI_APIKEY:
+        print(
+            f"No gemini API key found in environment 'GEMINI_APIKEY'. Cannot continue."
+        )
+        raise SystemExit
+
+    invoke_with_function_calling(
+        GEMINI_APIKEY, verbose=(not args.quiet), filename_filter=args.filter
+    )
