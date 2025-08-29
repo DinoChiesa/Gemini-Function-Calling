@@ -160,20 +160,20 @@ def get_weather_forecast(*args):
             print(error_msg)
             return {"error": error_msg}
 
-        first_period = periods[0]
-        temperature = first_period.get("temperature")
-        period_name = first_period.get("name")
+        keys_to_keep = [
+            "name",
+            "temperature",
+            "temperatureUnit",
+            "probabilityOfPrecipitation",
+            "shortForecast",
+            "detailedForecast",
+        ]
 
-        if temperature is None or period_name is None:
-            error_msg = "Could not extract temperature or period name from forecast."
-            print(error_msg)
-            return {
-                "error": error_msg,
-                "details": "Missing 'temperature' or 'name' in first period.",
-            }
-
-        print(f"Forecast for '{placename}': {period_name} - {temperature}F")
-        return {"temperature": temperature, "periodName": period_name}
+        return {
+            f"Forecast for '{placename}'": [
+                {key: period[key] for key in keys_to_keep} for period in periods
+            ]
+        }
 
     except requests.exceptions.RequestException as e:
         error_msg = f"Weather.gov forecast API request failed: {e}"

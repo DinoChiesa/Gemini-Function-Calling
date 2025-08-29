@@ -42,10 +42,12 @@ def fetch_models(api_key):
     if not api_key:
         return
 
-    url = f"{BASE_API_URL}/v1beta/models?key={api_key}"
+    my_headers = {"x-goog-api-key": api_key}
+
+    url = f"{BASE_API_URL}/v1beta/models"
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=my_headers)
         response.raise_for_status()
         models_data = response.json()
         print(json.dumps(models_data, indent=2))
@@ -64,9 +66,9 @@ def generate_content(api_key):
     if not api_key:
         return
 
-    url = (
-        f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
-    )
+    my_headers = {"x-goog-api-key": api_key}
+
+    url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent"
 
     instruction_prompts = [
         {
@@ -97,7 +99,7 @@ def generate_content(api_key):
         "generation_config": {"temperature": 1, "topP": 1},
     }
 
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
 
     try:
         print(f"\nGenerating content with model: {TEXT_MODEL_NAME}...")

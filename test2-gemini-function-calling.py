@@ -118,10 +118,8 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
     if not payload:
         return []
 
-    url = (
-        f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent?key={api_key}"
-    )
-    headers = {"Content-Type": "application/json"}
+    url = f"{BASE_API_URL}/v1beta/models/{TEXT_MODEL_NAME}:generateContent"
+    headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
 
     try:
         print(

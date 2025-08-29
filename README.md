@@ -1,13 +1,44 @@
 # Gemini Function calling example
 
-[This repo is intended for educational and illustration purposes.]
+This is an example of an app that calls into the Gemini Model, passing it a set
+of functions that are available in the app. This is what Gemini calls ["Function
+calling"](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling);
+basically the Model can tell the app (agent) to invoke functions to gather more
+information that will be helpful in generating a responnse to the user prompt.
+
+## Disclaimer
+
+I built this some time ago as a way to explore this capability in Gemini models,
+and I shared it with the intention to educate and illustrate.
+
+Since I originally shared this, there has been lots of activity in this
+space. Two big items: Anthropic published the [Model Context Protocol
+(MCP)](https://modelcontextprotocol.io/introduction) specification; Google
+published the [Agent Development Kit](https://google.github.io/adk-docs/).
+
+If I were building an agent today, that would use the Gemini
+models or other models, along with various tools, I'd use the [Agent
+Development Kit](https://google.github.io/adk-docs/). The ADK is a helpful
+framework for building such things, and supports multiple models cleanly.
+Really well thought out.  Even so, this repo still can serve as the basis for
+education and understanding of the underlying interactions.
+
+If I were building a service that I wanted to be accessible from arbitrary
+agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
+framework](https://github.com/jlowin/fastmcp).
+
+This repo remains, as something that can be helpful for exploriing.
+
+
+## Background
 
 Large Language Models (LLMs) seem almost magic. But they are constrained by some limitations:
 
 - They are frozen after training, leading to stale knowledge.
 - They can't query or modify external data.
 
-_The above and some of the text following is paraphrased from [Google's documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling)_
+_The above and some of the text following is paraphrased from [Google's
+documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling).
 
 _Also, the above isn't 100% true at this point_.  The [Gemini
 UI](https://gemini.google.com) can now provide correct and accurate answers to
@@ -35,7 +66,7 @@ function calling. This repo demonstrates some of that.
 
 ## OK, So what's going on in this Repo?
 
-This example code shows how to invoke generativelanguage.googleapis.com :
+This example code shows how to invoke "The Gemini API" located at generativelanguage.googleapis.com :
 
  1. ...to list available models, and to generate content.
     The latter could be used, for example, to ask for a dynamically-generated limerick or
@@ -49,7 +80,7 @@ This example code shows how to invoke generativelanguage.googleapis.com :
     This is in [test2-gemini-function-calling.py](./test2-gemini-function-calling.py)
 
 The purpose of this repo is just for educational and illustration purposes.
-So people can see how it works ni a working example.
+So people can see how it works in a practical example.
 
 
 Before we get into more specific details on how to use these things, let's cover some background.
@@ -83,7 +114,7 @@ The key difference lies in their intended use cases and features:
 
 - The aiplatform.googleapis.com endpoint is part of Vertex AI, Google Cloud's unified machine learning platform. This endpoint is geared towards enterprise applications and production environments. It offers more robust features like integration with other Google Cloud services (IAM for authentication, MLOps tools), data residency options, and potentially different pricing and quota structures.
 
-A good approach, start with generativelanguage.googleapis.com for exploration
+A good approach: start with generativelanguage.googleapis.com for exploration
 and early development. When you're ready to build scalable, production-ready
 applications with more control and integration, transition to the Vertex AI
 endpoint.
@@ -96,8 +127,9 @@ OK let's get started.
 A simple API call to Gemini might look like this:
 
 ```
-POST :gemini/v1beta/models/:model:generateContent?key=:apikey
+POST :gemini/v1beta/models/:model:generateContent
 Content-Type: application/json
+x-goog-api-key: :apikey
 
 {
   "contents": [
@@ -130,8 +162,9 @@ description of "tools" that THE APP can use to help the LLM respond to the user'
 A modified payload might look like this:
 
 ```
-POST :gemini/v1beta/models/:model/:generateContent?key=:apikey
+POST :gemini/v1beta/models/:model/:generateContent
 Content-Type: application/json
+x-goog-api-key: :apikey
 
 {
   "contents": [
@@ -398,32 +431,90 @@ This "function calling" example is just a minimalistic view at the same capabili
 ## What about MCP?
 
 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
-prescribes a proposed "standard" model for describing tools to LLMs.  Google has
-defined a Gemini-specific format for describing tools (see above). With MCP,
-Anthropic is saying "We'll support this format, and we want others to support it
-too."
+prescribes a proposed "standard" model for describing tools to chatbots, and
+allowing chatbots to invoke tools. With MCP, Anthropic is saying "We think this
+is a good way for chatbots to plug into tools".  They support it in their
+chatbot, and encourage others to support it too.
 
-So you could do something similar to this "function calling" example, with MCP,
-when Gemini supports it. At the I/O Event for 2025, Google announced that
-[Gemini will support
-MCP](https://blog.google/technology/google-deepmind/google-gemini-updates-io-2025/#performance). This
-will be coming soon.
+The Agentic System involves 3 actors: Agent/chatbot, LLM, and Tools Server. As
+depicted in the diagram above, the agent communicates to both the LLM and the
+tools server. (In the general case the agent could talk to more than one model,
+and more than one tools server). The LLM and tools server do not directly
+connect. The LLM knows about tools only to the extent that the agent informs it;
+and the Tools Server doesn't know anything about the LLM.
 
-While MCP defines how to register tools with an agent, _it won't change how the
-agent talks to the LLM_.  The agent will still send up a payload with
+MCP describes how the agent talks to the Tools Server. It does not describe how
+the agent talks to the LLM.
 
+Google has defined a Gemini-specific format, which I discussed above, to allow
+the agent to describe tools to the LLM. Anthropic, for its Claude Opus and
+Sonnet models, describes _an alternative_ way for agents to describe tools to the
+LLM.  It looks like this:
+
+```json
+{
+  "tools" : [
+    {
+      "name": "get_current_weather",
+      "description": "Get the current weather in a given location",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA; or a zip code e.g. 95616"
+          }
+        },
+        "required": ["location"]
+      }
+    },
+   ],
+   ...
+}
 ```
+
+This is _almost the same as_ the JSON that Gemini uses:
+
+```json
   "tools": [
     {
       "functionDeclarations": [
-      ...
+        {
+          "name": "get_current_weather",
+          "description": "Get the current weather in a given location",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA; or a zip code e.g. 95616"
+              }
+            },
+            "required": ["location"]
+          }
+        }
+      ]
+    }
+  ]
 ```
 
-...in it, but those `functionDeclaration` things will be obtained from the MCP
+
+The point is, MCP isn't that. MCP defines the
+agent->tools link; _it does not have anything to say about how the agent talks
+to the LLM_.
+
+In this example, the "tools" available to the custom agent in this repo are hand-coded and
+directly linked. The agent and the functions it might invoke, are defined all in
+one program. MCP is not used here, but if I had used it, it would allow separation between those.
+
+Regardless whether there is separation between the agent and the tools, the
+agent will still send up a payload to the LLM describing which tools it can
+access.
+
+If MCP is involved, the things in the `tools` array will be obtained from the MCP
 Servers that are available, rather than from hard-coded names of local python
 functions.
 
-That's how a chatbot that supports MCP, talks to Gemini.
 
 ## Interesting Note
 
