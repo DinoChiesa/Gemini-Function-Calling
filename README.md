@@ -37,7 +37,7 @@ Large Language Models (LLMs) seem almost magic. But they are constrained by some
 - They are frozen after training, leading to stale knowledge.
 - They can't query or modify external data.
 
-_The above and some of the text following is paraphrased from [Google's
+The above and some of the text following is paraphrased from [Google's
 documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling).
 
 _Also, the above isn't 100% true at this point_.  The [Gemini
@@ -46,27 +46,48 @@ these questions:
   - "Can you tell me the weather in Des Moines, IA?"
   - "Are the Seattle Mariners playing tonight, and if so, which team are they playing?"
 
-This is because the latest Gemini models are augmenting the LLM capabilities
-with Google Search. So while a given Gemini model might be "frozen" based on its
-training date, it can query at least _some_ external tools now.
+This is because the latest Gemini models are augmenting the LLM capabilities with Google
+Search on the server side. So while a given Gemini model might be "frozen" based on its
+training date, it can query at least _some_ external tools now, all on its own.
 
-_But_ Gemini obviously cannot directly plug into systems or services that are local to your environment.
+_But_ the remote Gemini model obviously cannot directly plug into systems or services that
+are local to your environment.
 
-Function calling can mitigate this limitation. Function calling is sometimes
-referred to as tool use because it allows the model to augment its knowledge with information
-obtained via systems outside its purview, via functions defined within the app's logic, or remote
-APIs accessible to the app, but not accessible to Gemini.
+Function calling can mitigate this limitation. Function calling is sometimes referred to as
+_tool use_ (that's what Anthropic calls it) because it allows the model to augment its
+knowledge with information obtained via systems outside its purview, via functions defined
+within the app's logic, or remote APIs accessible to the app, but not accessible directly by
+the Gemini model.
+
+It looks like this:
 
 ![function calling image](https://cloud.google.com/static/vertex-ai/generative-ai/docs/multimodal/images/function-calling.png)
 
-While the documentation on the referenced page specifically refers to Vertex AI,
+In English,
+
+- the user provides a prompt, eg,  "This week, what evening will  be cooler, Wednesday or Thursday?"
+
+- the application (agent) sends that prompt, along with a description of a set of available
+  functions, up to the remote model (Gemini) .
+
+- Gemini looks at the prompt, and the available tools, and tsends back a reply instructing the app to
+  invoke one of the tools.
+
+- the agent does that, and then sends the original prompt, plus the results of the tool invocaiton,
+  back up to Gemini.
+
+- Gemini forms a response based on all of that input, sends it back to the application.
+
+- The application returns the response to the user.
+
+NB: While the documentation on the referenced page specifically refers to Vertex AI,
 the generic Gemini endpoint available at generativelanguage.googleapis.com also supports
 function calling. This repo demonstrates some of that.
 
 
 ## OK, So what's going on in this Repo?
 
-This example code shows how to invoke "The Gemini API" located at generativelanguage.googleapis.com :
+This example code shows how an app can invoke "the Gemini API" located at generativelanguage.googleapis.com :
 
  1. ...to list available models, and to generate content.
     The latter could be used, for example, to ask for a dynamically-generated limerick or
@@ -79,8 +100,8 @@ This example code shows how to invoke "The Gemini API" located at generativelang
 
     This is in [test2-gemini-function-calling.py](./test2-gemini-function-calling.py)
 
-The purpose of this repo is just for educational and illustration purposes.
-So people can see how it works in a practical example.
+    In this case the tools are a weather forecast tool, and a scrabble word score calculator tool.
+
 
 
 Before we get into more specific details on how to use these things, let's cover some background.
@@ -89,20 +110,32 @@ Before we get into more specific details on how to use these things, let's cover
 
 Here's a simplified flow:
 
-1. You define functions: In your application code, you describe functions that can perform specific actions (e.g., get current weather, fetch product details from a database, book a meeting).
+1. The app defines functions, and the application code hosts the logic for these
+   functions that can perform specific actions (e.g., get current weather, fetch
+   product details from a database, book a meeting).
 
-1. You pass function descriptions to Gemini: When you send a prompt to Gemini, you also provide the descriptions (name, parameters, what it does) of your available functions.
+1. The app passes function descriptions to Gemini along with the user
+   prompt. These function descriptions include the name, parameters, and purpose
+   of each available function.
 
-1. Gemini analyzes the prompt: If Gemini determines that the user's request requires an action that one of your defined functions can handle, it doesn't try to answer directly.
+1. Gemini analyzes the prompt: If Gemini determines that responding to the
+   user's request requires additional information from one of the defined
+   functions, Gemini doesn't try to answer directly.  Instead, Gemini returns a
+   "function call" request, a structured JSON object indicating which function
+   it wants the agent to call and with what arguments - probably extracted from
+   the user's prompt.
 
-1. Gemini returns a "function call" request: Instead of a text answer, the model returns a structured JSON object indicating which function it wants to call and with what arguments (extracted from the user's prompt).
+1. The app executes the function, with the provided arguments.
 
-1. You execute the function: Your application code receives this JSON, executes the specified local function with the provided arguments.
+1. The app then sends the function's result back to Gemini, along with the
+   original prompt.  "The user said THIS, and also here's the information from
+   that function you asked me to invoke."
 
-1. You send the function's result back to Gemini: You then make another call to Gemini, providing the output/result from your function.
+1. Gemini uses the additional "context" to generate a final response: Gemini
+   incorporates the information from your function's execution to provide a
+   comprehensive and relevant answer to the user's original prompt.
 
-1. Gemini uses the result to generate a final response: Gemini incorporates the information from your function's execution to provide a comprehensive and relevant answer to the user's original prompt.
-
+Steps 2 through 5 can be iterative.
 
 ## The difference between the generic Gemini endpoint and Vertex AI
 
@@ -110,9 +143,17 @@ Both Gemini and Vertex AI  are accessible via API endpoints. Both of them genera
 
 The key difference lies in their intended use cases and features:
 
-- The generativelanguage.googleapis.com endpoint (often referred to as the Gemini API or Google AI Studio's API) is designed for developers to quickly get started and prototype with Gemini models. It's simpler to use, often leveraging API keys for authentication.
+- The generativelanguage.googleapis.com endpoint (often referred to as the
+  Gemini API or Google AI Studio's API) is designed for developers to quickly
+  get started and prototype with Gemini models. It's simpler to use, often
+  leveraging API keys for authentication.
 
-- The aiplatform.googleapis.com endpoint is part of Vertex AI, Google Cloud's unified machine learning platform. This endpoint is geared towards enterprise applications and production environments. It offers more robust features like integration with other Google Cloud services (IAM for authentication, MLOps tools), data residency options, and potentially different pricing and quota structures.
+- The aiplatform.googleapis.com endpoint is part of Vertex AI, Google Cloud's
+  unified machine learning platform. This endpoint is geared towards enterprise
+  applications and production environments. It offers more robust features like
+  integration with other Google Cloud services (IAM for authentication, MLOps
+  tools), data residency options, and potentially different pricing and quota
+  structures.
 
 A good approach: start with generativelanguage.googleapis.com for exploration
 and early development. When you're ready to build scalable, production-ready
@@ -151,13 +192,17 @@ x-goog-api-key: :apikey
 
 In the above :
 - `:gemini` => `https://generativelanguage.googleapis.com`
-- `:model` => something like `gemini-2.5-flash-preview-05-20` or one of the other available Gemini models
-- `:apikey` => the value you get from [Google AI Studio](https://aistudio.google.com/)
+- `:model` => something like `gemini-2.5-flash` or one of the other available Gemini models
+- `:apikey` => a key you get from [Google AI Studio](https://aistudio.google.com/)
 - `:generateContent` => is what it is. It does not get replaced with anything. It's just part of the Gemini API interface.
 
+In this case, the caller is not telling Gemini about any available tools. Gemini
+will be able to respond to this kind of prompt ("What are some good approaches
+to improving my sleep quality?") without any extra outside help.
 
-When submitting a prompt to the LLM, an app can augment that JSON to provide the model with a
-description of "tools" that THE APP can use to help the LLM respond to the user's prompt.
+In the case where there are local tools,
+when submitting a prompt to the LLM, the app augments that JSON to provide the model with a
+description of "tools" that the app can use to help the LLM respond to the user's prompt.
 
 A modified payload might look like this:
 
@@ -203,7 +248,7 @@ x-goog-api-key: :apikey
 ```
 
 (Actually, [Gemini](https://gemini.google.com) is smart enough to figure out
-Scrabble word scores, too, but let's just put that aside for the moment.)
+Scrabble word scores now too, but let's just put that aside for the moment.)
 
 When you send that request to Gemini, you _can_ get a response like the following:
 
@@ -244,10 +289,12 @@ When you send that request to Gemini, you _can_ get a response like the followin
 }
 ```
 
-Notice the `$.candidates[0].content.parts[0].functionCall` in the response.  This is Gemini saying to _your app_: please invoke that function you
-told me about, with these arguments.  If your app is designed correctly, it
-invokes the function locally, and then passes back information to Gemini about
-the results, along with original prompt, and Gemini's instruction to call the function, in order.
+Notice the `$.candidates[0].content.parts[0].functionCall` in the response.
+This is Gemini saying to _your app_: please invoke that function you told me
+about, with these arguments. If your app is designed correctly, it invokes the
+function locally, and then passes back information to Gemini about the results,
+along with original prompt, and Gemini's instruction to call the function, in
+order.
 
 The resulting structure is like this:
 
@@ -305,24 +352,23 @@ It looks like so:
 }
 ```
 
-In that payload, you're giving Gemini the original prompt, PLUS the thing it
-asked for, PLUS the data you collected at its request.
+In that payload, you're giving Gemini the original prompt, PLUS the thing it asked for, PLUS
+the data you collected at its request.
 
-And then Gemini can assemble and digest all of that information and provide back
-another coherent response. This back-and-forth can continue for multiple
-iterations. In each response, if Gemini thinks (a) that it does not have enough
-information to provide a complete response, and (b) that invoking the tools your
-app has access to, can help produce a correct answer, it will tell your app
-that, by sending back "functionCall" elements in the response as shown above.
+And then Gemini can assemble and digest all of that information and provide back another
+coherent response. This back-and-forth can continue for multiple iterations. In each
+response, if Gemini thinks (a) that it does not have enough information to provide a
+complete response, and (b) that getting information from the tools your app has access to,
+can help produce a correct answer, it will tell your app that, by sending back
+"functionCall" elements in the response as shown above.
 
-Depending on the number of tools you register and the query you pass in, your
-app may need to iterate a few times, going back and forth with Gemini, before
-Gemini gives a final answer. This is called the Reasoning/Action loop, aka ReAct
-loop.
+Depending on the number of tools you register and the query you pass in, your app may need
+to iterate a few times, going back and forth with Gemini, before Gemini gives a final
+answer. This is called the Reasoning/Action loop, aka ReAct loop.
 
-The example code here shows that. On each successive iteration it shows what it
-sends back to Gemini, and what Gemini sends in return.  It'a a good way to gain
-insight into how this tools thing works.
+The example code here shows that. On each successive iteration it shows what it sends back
+to Gemini, and what Gemini sends in return.  It'a a good way to gain insight into how this
+tools thing works.
 
 
 ## Trying the code - Pre-requisites
@@ -361,7 +407,7 @@ This will select one of a fixed set of prompts, send it to Gemini, and display t
 python3 ./test1-gemini-generate-content.py
 ```
 
-This is just an app using the REST API for Gemini.
+This is just an app using the REST API for Gemini. No tools involved.
 
 
 ## Run the function calling test
@@ -386,7 +432,7 @@ designated function call available locally.
 > This is python, which is a dynamic environment and invoking functions by name
 > this way is pretty easy.  But the same approach would work with any app or
 > environment that can conditionally invoke methods, providing dynamic arguments
-> to those methods.  It will work in Java, C#, Bash/curl, Powershell, Golang,
+> to those methods.  It will work in Java, C#, Bash/curl, JavaScript, Powershell, Golang,
 > etc.
 
 This script also prints the payloads sent in and out, during this exchange, to
@@ -426,7 +472,7 @@ Google publishes an Agent Development Kit that allows you to build agentic apps
 more easily. Those apps can be things that run on the command line, or something
 that runs on a mobile phone, or a desktop, or as a cloud-based service.
 
-This "function calling" example is just a minimalistic view at the same capability.
+This "function calling" example is just a minimalistic approach implementing the same capability.
 
 ## What about MCP?
 
@@ -499,7 +545,7 @@ This is _almost the same as_ the JSON that Gemini uses:
 ```
 
 
-The point is, MCP isn't that. MCP defines the
+The point is, MCP doesn't talk about that. MCP defines the
 agent->tools link; _it does not have anything to say about how the agent talks
 to the LLM_.
 
@@ -512,7 +558,7 @@ agent will still send up a payload to the LLM describing which tools it can
 access.
 
 If MCP is involved, the things in the `tools` array will be obtained from the MCP
-Servers that are available, rather than from hard-coded names of local python
+Servers that are available, rather than from hard-coded names of local python (or JavaScript, or Java, etc)
 functions.
 
 
@@ -600,7 +646,7 @@ def get_min_scrabble_word_score(*args):
     return total_score
 ```
 
-Amazing.
+Gemini is Amazing.
 
 
 ## Disclaimer
