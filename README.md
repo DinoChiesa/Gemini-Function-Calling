@@ -6,28 +6,28 @@ calling"](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/funct
 basically the Model can tell the app (agent) to invoke functions to gather more
 information that will be helpful in generating a responnse to the user prompt.
 
-## Disclaimer
+## Framing
 
 I built this some time ago as a way to explore this capability in Gemini models,
 and I shared it with the intention to educate and illustrate.
 
-Since I originally shared this, there has been lots of activity in this
+Since I originally shared this, there has been plenty of activity in this
 space. Two big items: Anthropic published the [Model Context Protocol
 (MCP)](https://modelcontextprotocol.io/introduction) specification; Google
 published the [Agent Development Kit](https://google.github.io/adk-docs/).
 
-If I were building an agent today, that would use the Gemini
-models or other models, along with various tools, I'd use the [Agent
-Development Kit](https://google.github.io/adk-docs/). The ADK is a helpful
-framework for building such things, and supports multiple models cleanly.
-Really well thought out.  Even so, this repo still can serve as the basis for
-education and understanding of the underlying interactions.
+* If I were building an agent today, that would use the Gemini models or other
+  models, along with various tools, I'd use the [Agent Development
+  Kit](https://google.github.io/adk-docs/). The ADK is a helpful framework for
+  building such things, and supports multiple models cleanly, and a way to
+  register "tools" of various kinds.  It's really well thought out.
 
-If I were building a service that I wanted to be accessible from arbitrary
-agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
-framework](https://github.com/jlowin/fastmcp).
+* If I were building a service that I wanted to be accessible from arbitrary
+  agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
+  framework](https://github.com/jlowin/fastmcp).
 
-This repo remains, as something that can be helpful for exploriing.
+This repo remains valuable, to illustrate and clarify the fundamentals and the
+underlying interactions.
 
 
 ## Background
