@@ -1,4 +1,4 @@
-# Gemini Function calling example
+# Gemini Function calling, and how it relates to MCP
 
 This is an example of an app that calls into the Gemini Model, passing it a set
 of functions that are available in the app. This is what Gemini calls ["Function
@@ -26,8 +26,10 @@ published the [Agent Development Kit](https://google.github.io/adk-docs/).
   agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
   framework](https://github.com/jlowin/fastmcp).
 
-This repo remains valuable, to illustrate and clarify the fundamentals and the
-underlying interactions.
+This repo remains valuable, to illustrate and clarify the fundamentals and the underlying
+interactions.  This might be a good thing to go through, and try out, if you are learning
+MCP and want to understand its purpose, rather than trying to understand the specifics of
+the protocol.
 
 
 ## Background
