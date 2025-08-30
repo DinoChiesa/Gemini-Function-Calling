@@ -4,14 +4,15 @@ This is an example of an app that calls into the Gemini Model, passing it a set
 of functions that are available in the app. This is what Gemini calls ["Function
 calling"](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling);
 basically the Model can tell the app (agent) to invoke functions to gather more
-information that will be helpful in generating a responnse to the user prompt.
+information that will be helpful in generating a response to the user prompt.
+When the app invokes tools, it  might do so via MCP.
 
 ## Framing
 
-I built this some time ago as a way to explore this capability in Gemini models,
-and I shared it with the intention to educate and illustrate.
+I built this some time ago as a way to explore the function calling capability in Gemini models,
+and I shared it here with the intention to educate and illustrate.
 
-Since I originally shared this, there has been plenty of activity in this
+Since then, there has been plenty of activity in this
 space. Two big items: Anthropic published the [Model Context Protocol
 (MCP)](https://modelcontextprotocol.io/introduction) specification; Google
 published the [Agent Development Kit](https://google.github.io/adk-docs/).
@@ -20,16 +21,16 @@ published the [Agent Development Kit](https://google.github.io/adk-docs/).
   models, along with various tools, I'd use the [Agent Development
   Kit](https://google.github.io/adk-docs/). The ADK is a helpful framework for
   building such things, and supports multiple models cleanly, and a way to
-  register "tools" of various kinds.  It's really well thought out.
+  register "tools" of various kinds.  It's really well thought out and easy to use.
 
 * If I were building a service that I wanted to be accessible from arbitrary
   agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
   framework](https://github.com/jlowin/fastmcp).
 
 This repo remains valuable, to illustrate and clarify the fundamentals and the underlying
-interactions.  This might be a good thing to go through, and try out, if you are learning
-MCP and want to understand its purpose, rather than trying to understand the specifics of
-the protocol.
+interactions, and to understand the details of the interactions.  It is a good thing to go
+through and try out, if you are exploring MCP and want to understand _its purpose_, rather
+than wanting to understand the specifics of the protocol.
 
 
 ## Background
@@ -69,7 +70,6 @@ It looks like this:
 
 In English,
 
-
 1. The app defines functions, and the application code hosts the logic for these
    functions that can perform specific actions (e.g., get current weather, fetch
    product details from a database, book a meeting).
@@ -104,6 +104,8 @@ NB: While the documentation on the referenced page specifically refers to Vertex
 the generic Gemini endpoint available at generativelanguage.googleapis.com also supports
 function calling. This repo demonstrates some of that.
 
+The same kind of thing works in other Large Language Models; some others call this "tool
+use" rather than "function calling".
 
 ## OK, So what's going on in this Repo?
 
@@ -345,7 +347,7 @@ And then Gemini can assemble and digest all of that information and provide back
 coherent response. This back-and-forth can continue for multiple iterations. In each
 response, if Gemini thinks (a) that it does not have enough information to provide a
 complete response, and (b) that getting information from the tools your app has access to,
-can help produce a correct answer, it will tell your app that, by sending back
+can help produce a more correct or complete answer, it will tell your app that, by sending back
 "functionCall" elements in the response as shown above.
 
 Depending on the number of tools you register and the query you pass in, your app may need
@@ -432,9 +434,9 @@ function.  That shows the iterative back-and-forth.
 
 ### One note on the `get_weather_forecast` function
 
-The `get_weather_forecast` function is implemented via a set of remote API requests,
-first to resolve a placename like "Chicago IL" to a latitude/longitude, and then
-to get the weather forecast for a given latitude/longitude.
+The `get_weather_forecast` function is implemented as a wrapper around a set of API requests
+to remote endpoints, first to resolve a placename like "Chicago IL" to a latitude/longitude,
+and then to get the weather forecast for a given latitude/longitude.
 
 This just illustrates that a "function" need not only be dependent upon local calculation.
 It can do ... lots of things. Anything you can implement in software.
@@ -451,7 +453,7 @@ basically the same:
  - the app collects a "prompt", sends it to the LLM
  - the LLM may respond with a request for more information, or, in the case of an
    agent scenario, the LLM may respond with a requested ACTION to perform.
- - the app then sends results back up to the LLM
+ - the app performs the action, then sends results back up to the LLM
  - this back-and-forth cycle may continue
 
 Google publishes an Agent Development Kit that allows you to build agentic apps
@@ -480,7 +482,7 @@ the agent talks to the LLM.
 
 Google has defined a Gemini-specific format, which I discussed above, to allow
 the agent to describe tools to the LLM. Anthropic, for its Claude Opus and
-Sonnet models, describes _an alternative_ way for agents to describe tools to the
+Sonnet models, uses _an alternative_ way for agents to describe tools to the
 LLM.  It looks like this:
 
 ```json

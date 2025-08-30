@@ -107,9 +107,9 @@ def get_weather_forecast(*args):
                 return {"error": error_msg}
             print(f"Redirected to: {redirect_url}")
             if not redirect_url.startswith("https://"):
-                print(
-                    f"Redirect URL '{redirect_url}' is not fully qualified. Prepending WEATHER_GOV_BASE_URL."
-                )
+                # print(
+                #     f"Redirect URL '{redirect_url}' is not fully qualified. Prepending WEATHER_GOV_BASE_URL."
+                # )
                 redirect_url = f"{WEATHER_GOV_BASE_URL}{redirect_url}"  # Ensure no double slashes if redirect_url starts with /
                 if not redirect_url.startswith(
                     f"{WEATHER_GOV_BASE_URL}/"

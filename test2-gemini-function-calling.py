@@ -145,7 +145,7 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
             # Make the API call
             response_iter = None
             try:
-                print(f"Making API call for iteration {iteration_num + 1}...")
+                print(f"Calling Model API for iteration {iteration_num + 1}...")
                 if verbose:
                     print("Request Payload:")
                     print(
@@ -159,7 +159,7 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
                 response_iter.raise_for_status()
                 current_api_response_json = response_iter.json()
                 last_processed_api_response_json = current_api_response_json
-                print(f"Response from API received.")
+                print(f"\nResponse from Model API received.")
                 if verbose:
                     print("Response Payload:")
                     print(
@@ -181,9 +181,7 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
             )
 
             if not extracted_api_calls:
-                print(
-                    "No function calls found in the latest API response. Halting iteration."
-                )
+                # No function calls found in the latest API response. Halting iteration.
                 break
 
             model_content_part = None
@@ -241,13 +239,6 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
 
         print("\n--- Iterative Function Calling Process Ended ---")
         if last_processed_api_response_json:
-            print("Final API Response (or last successfully processed response):")
-            print(
-                json.dumps(
-                    last_processed_api_response_json, indent=2, ensure_ascii=False
-                )
-            )
-
             final_response_text = _get_text_from_payload(
                 last_processed_api_response_json, type="final_response"
             )
