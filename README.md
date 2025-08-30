@@ -61,26 +61,44 @@ knowledge with information obtained via systems outside its purview, via functio
 within the app's logic, or remote APIs accessible to the app, but not accessible directly by
 the Gemini model.
 
+## How does function calling work in Gemini?
+
 It looks like this:
 
 ![function calling image](https://cloud.google.com/static/vertex-ai/generative-ai/docs/multimodal/images/function-calling.png)
 
 In English,
 
-- the user provides a prompt, eg,  "This week, what evening will  be cooler, Wednesday or Thursday?"
 
-- the application (agent) sends that prompt, along with a description of a set of available
-  functions, up to the remote model (Gemini) .
+1. The app defines functions, and the application code hosts the logic for these
+   functions that can perform specific actions (e.g., get current weather, fetch
+   product details from a database, book a meeting).
 
-- Gemini looks at the prompt, and the available tools, and tsends back a reply instructing the app to
-  invoke one of the tools.
+2. The app passes function descriptions to the remote model (Gemini),  along with the user
+   prompt, eg,  "This week, which evening will be cooler, Wednesday or Thursday?"
+   These function descriptions include the name, parameters, and purpose
+   of each available function.
 
-- the agent does that, and then sends the original prompt, plus the results of the tool invocaiton,
-  back up to Gemini.
+3. Gemini analyzes the prompt: If Gemini determines that responding to the
+   user's request requires additional information from one of the defined
+   functions, Gemini doesn't try to answer directly.  Instead, Gemini returns a
+   "function call" request, a structured JSON object indicating which function
+   it wants the agent to call and with what arguments - probably extracted from
+   the user's prompt.
 
-- Gemini forms a response based on all of that input, sends it back to the application.
+4. The app executes the function, with the provided arguments.
 
-- The application returns the response to the user.
+5. The app then sends the function's result back to Gemini, along with the
+   original prompt.  "The user said THIS, and also here's the information from
+   that function you asked me to invoke."
+
+6. Gemini uses the additional "context" to generate a final response: Gemini
+   incorporates the information from your function's execution to provide a
+   comprehensive and relevant answer to the user's original prompt.
+
+7. The application returns the response to the user.
+
+Steps 2 through 5 can be iterative.
 
 NB: While the documentation on the referenced page specifically refers to Vertex AI,
 the generic Gemini endpoint available at generativelanguage.googleapis.com also supports
@@ -105,41 +123,7 @@ This example code shows how an app can invoke "the Gemini API" located at genera
     In this case the tools are a weather forecast tool, and a scrabble word score calculator tool.
 
 
-
-Before we get into more specific details on how to use these things, let's cover some background.
-
-## How does function calling work in Gemini?
-
-Here's a simplified flow:
-
-1. The app defines functions, and the application code hosts the logic for these
-   functions that can perform specific actions (e.g., get current weather, fetch
-   product details from a database, book a meeting).
-
-1. The app passes function descriptions to Gemini along with the user
-   prompt. These function descriptions include the name, parameters, and purpose
-   of each available function.
-
-1. Gemini analyzes the prompt: If Gemini determines that responding to the
-   user's request requires additional information from one of the defined
-   functions, Gemini doesn't try to answer directly.  Instead, Gemini returns a
-   "function call" request, a structured JSON object indicating which function
-   it wants the agent to call and with what arguments - probably extracted from
-   the user's prompt.
-
-1. The app executes the function, with the provided arguments.
-
-1. The app then sends the function's result back to Gemini, along with the
-   original prompt.  "The user said THIS, and also here's the information from
-   that function you asked me to invoke."
-
-1. Gemini uses the additional "context" to generate a final response: Gemini
-   incorporates the information from your function's execution to provide a
-   comprehensive and relevant answer to the user's original prompt.
-
-Steps 2 through 5 can be iterative.
-
-## The difference between the generic Gemini endpoint and Vertex AI
+## By The Way: The difference between the generic Gemini endpoint and Vertex AI
 
 Both Gemini and Vertex AI  are accessible via API endpoints. Both of them generate content dynamically.
 
@@ -163,7 +147,7 @@ applications with more control and integration, transition to the Vertex AI
 endpoint.
 
 
-## Using Function Calling with Gemini, in detail
+## Using Function Calling with the Gemini API, in detail
 
 OK let's get started.
 
@@ -369,8 +353,8 @@ to iterate a few times, going back and forth with Gemini, before Gemini gives a 
 answer. This is called the Reasoning/Action loop, aka ReAct loop.
 
 The example code here shows that. On each successive iteration it shows what it sends back
-to Gemini, and what Gemini sends in return.  It'a a good way to gain insight into how this
-tools thing works.
+to Gemini, and what Gemini sends in return.  It'a a good way to gain insight into how
+"tool use" aka "function calling" works.
 
 
 ## Trying the code - Pre-requisites
@@ -448,7 +432,7 @@ function.  That shows the iterative back-and-forth.
 
 ### One note on the `get_weather_forecast` function
 
-The `get_weather_forecast` function is composed of a set of remote API requests,
+The `get_weather_forecast` function is implemented via a set of remote API requests,
 first to resolve a placename like "Chicago IL" to a latitude/longitude, and then
 to get the weather forecast for a given latitude/longitude.
 
@@ -458,7 +442,7 @@ It can do ... lots of things. Anything you can implement in software.
 
 ## How does this differ from AI-based Agents ?
 
-Agentic AI is... just this. It's connecting invokable functions to a LLM.  The
+This is ... the beginning of Agentic AI. It's connecting invokable functions to a LLM.  The
 idea behind _an agent_ is not limited to supplying more context to the LLM, but
 extends to "performing work". Performing a database update, or playing a music
 playlist, or opening the garage door, and so on.  But the interaction model is
@@ -484,12 +468,12 @@ allowing chatbots to invoke tools. With MCP, Anthropic is saying "We think this
 is a good way for chatbots to plug into tools".  They support it in their
 chatbot, and encourage others to support it too.
 
-The Agentic System involves 3 actors: Agent/chatbot, LLM, and Tools Server. As
-depicted in the diagram above, the agent communicates to both the LLM and the
-tools server. (In the general case the agent could talk to more than one model,
-and more than one tools server). The LLM and tools server do not directly
-connect. The LLM knows about tools only to the extent that the agent informs it;
-and the Tools Server doesn't know anything about the LLM.
+As depicted in the diagram above, an Agentic System involves 3 actors: Agent/chatbot, LLM,
+and Tools Server. The agent communicates to both the LLM and the tools server. (In the
+general case the agent could talk to more than one model, and more than one tools
+server). The LLM and tools server do not directly connect. The LLM knows about tools only to
+the extent that the agent informs it; and the Tools Server doesn't know anything about the
+LLM.
 
 MCP describes how the agent talks to the Tools Server. It does not describe how
 the agent talks to the LLM.
@@ -546,29 +530,37 @@ This is _almost the same as_ the JSON that Gemini uses:
   ]
 ```
 
+The point is, MCP doesn't talk about that! MCP defines the agent->tools link; _it does not
+have anything to say about how the agent talks to the LLM_.
 
-The point is, MCP doesn't talk about that. MCP defines the
-agent->tools link; _it does not have anything to say about how the agent talks
-to the LLM_.
+![function calling image with MCP](./img/fn_calling_mcp.png)
 
-In this example, the "tools" available to the custom agent in this repo are hand-coded and
-directly linked. The agent and the functions it might invoke, are defined all in
-one program. MCP is not used here, but if I had used it, it would allow separation between those.
+
+> NB: Given that, it would be
+> inappropriate to say "Gemini supports MCP", or "Claude Sonnet supports MCP" or even "an LLM
+> supports MCP."  It's not the model that would support MCP, it's the chatbot or the agent.
+> Some people conflate the chatbot and LLM into one thing, and call it "the LLM". I think that
+> confuses things.
+
+In this example, the "tools" available to the custom agent in this repo are hand-coded in
+python and directly linked. The agent and the functions it might invoke, are defined all in
+one program. MCP is not used here, but if I had used it, it would allow separation between
+those.
 
 Regardless whether there is separation between the agent and the tools, the
 agent will still send up a payload to the LLM describing which tools it can
 access.
 
-If MCP is involved, the things in the `tools` array will be obtained from the MCP
-Servers that are available, rather than from hard-coded names of local python (or JavaScript, or Java, etc)
-functions.
+If MCP is involved, the things in the `tools` array will be obtained from the MCP Servers
+that are available, rather than from hard-coded names of local python (or JavaScript, or
+Java, etc) functions.
 
 
 ## Interesting Note
 
 I'm not a python expert. I know C#, Java, JavaScript, and a little Powershell,
 but not much python.  Despite that, I implemented this example in just a few
-hours. It took me longer to write the README (honestly).
+hours. It took me longer to write the README.
 
 How did I work this magic?  Almost all of the python code in this repo was
 generated by Gemini, in response to English language prompts.
