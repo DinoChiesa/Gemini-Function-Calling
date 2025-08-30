@@ -109,9 +109,10 @@ use" rather than "function calling".
 
 ## OK, So what's going on in this Repo?
 
-This example code shows how an app can invoke "the Gemini API" located at generativelanguage.googleapis.com :
+This example code shows how an app can invoke "[the Gemini API](https://ai.google.dev/gemini-api/docs/text-generation#rest)" available at generativelanguage.googleapis.com :
 
  1. ...to list available models, and to generate content.
+
     The latter could be used, for example, to ask for a dynamically-generated limerick or
     to suggest ideas for a holiday in Croatia - normal LLM Chat use cases circa 2024.
 
