@@ -2,7 +2,7 @@
 
 This is an example of an app that calls into the Gemini Model, passing it a set
 of functions that are available in the app. This is what Gemini calls ["Function
-calling"](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling);
+calling"](https://ai.google.dev/gemini-api/docs/function-calling);
 basically the Model can tell the app (agent) to invoke functions to gather more
 information that will be helpful in generating a response to the user prompt.
 When the app invokes tools, it  might do so via MCP.
@@ -43,7 +43,7 @@ Large Language Models (LLMs) seem almost magic. But they are constrained by some
 The above and some of the text following is paraphrased from [Google's
 documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling).
 
-_Also, the above isn't 100% true at this point_.  The [Gemini
+_Also, the above isn't 100% true at this point!_  The [Gemini
 UI](https://gemini.google.com) can now provide correct and accurate answers to
 these questions:
   - "Can you tell me the weather in Des Moines, IA?"
