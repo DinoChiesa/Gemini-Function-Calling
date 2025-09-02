@@ -5,7 +5,7 @@ of functions that are available in the app. This is what Gemini calls ["Function
 calling"](https://ai.google.dev/gemini-api/docs/function-calling);
 basically the Model can tell the app (agent) to invoke functions to gather more
 information that will be helpful in generating a response to the user prompt.
-When the app invokes tools, it  might do so via MCP.
+When the app invokes tools, it might do so via MCP.
 
 ## Framing
 
@@ -31,6 +31,12 @@ This repo remains valuable, to illustrate and clarify the fundamentals and the u
 interactions, and to understand the details of the interactions.  It is a good thing to go
 through and try out, if you are exploring MCP and want to understand _its purpose_, rather
 than wanting to understand the specifics of the protocol.
+
+
+## Screencast
+
+For those who better absorb information visually, you may want to just [view the screencast](https://youtu.be/ha6binAoiV0).
+[![screenshot](./img/gemini-with-tools.png)](https://youtu.be/ha6binAoiV0)
 
 
 ## Background
