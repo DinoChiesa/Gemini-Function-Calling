@@ -9,8 +9,9 @@ When the app invokes tools, it might do so via MCP.
 
 ## Framing
 
-I built this some time ago as a way to explore the function calling capability in Gemini models,
-and I shared it here with the intention to educate and illustrate.
+I built this some time ago as a way to explore the function calling capability in Gemini
+models, as well as tool use in Anthropic models, and I shared it here with the intention to
+educate and illustrate.
 
 Since then, there has been plenty of activity in this
 space. Two big items: Anthropic published the [Model Context Protocol
@@ -23,14 +24,14 @@ published the [Agent Development Kit](https://google.github.io/adk-docs/).
   building such things, and supports multiple models cleanly, and a way to
   register "tools" of various kinds.  It's really well thought out and easy to use.
 
-* If I were building a service that I wanted to be accessible from arbitrary
-  agents or chatbots, I'd use MCP, probably via [jlowin's FastMCP
+* If I were building a custom service that I wanted to be accessible from arbitrary
+  agents or chatbots, I'd use MCP.  I'd probably implement it in python via [jlowin's FastMCP
   framework](https://github.com/jlowin/fastmcp).
 
 This repo remains valuable, to illustrate and clarify the fundamentals and the underlying
-interactions, and to understand the details of the interactions.  It is a good thing to go
-through and try out, if you are exploring MCP and want to understand _its purpose_, rather
-than wanting to understand the specifics of the protocol.
+interactions, and to understand the details of the interactions. It is a good thing to go
+through and try out, if you are exploring MCP and want to understand _its purpose_ and
+mechanics, rather than wanting to understand the specifics of the protocol.
 
 
 ## Screencast
@@ -120,7 +121,7 @@ This example code shows how an app can invoke "[the Gemini API](https://ai.googl
  1. ...to list available models, and to generate content.
 
     The latter could be used, for example, to ask for a dynamically-generated limerick or
-    to suggest ideas for a holiday in Croatia - normal LLM Chat use cases circa 2024.
+    to suggest ideas for a holiday in Croatia - normal LLM Chat use cases circa 2023-2024.
 
     This is in [test1-gemini-generate-content.py](./test1-gemini-generate-content.py)
 
@@ -243,7 +244,7 @@ x-goog-api-key: :apikey
 ```
 
 (Actually, [Gemini](https://gemini.google.com) is smart enough to figure out
-Scrabble word scores now too, but let's just put that aside for the moment.)
+Scrabble word scores now too, without client-side tools, but let's just put that aside for the moment.)
 
 When you send that request to Gemini, you _can_ get a response like the following:
 
@@ -296,11 +297,11 @@ The resulting structure is like this:
 ```json
 {
   "contents": [
-    ORIGINAL PROMPT
-    INSTRUCTION TO CALL TOOL
+    ORIGINAL USER PROMPT
+    GEMINI'S INSTRUCTION TO CALL TOOL
     RESULT FROM TOOL
   ]
-  ...
+  LIST OF AVAILABLE TOOLS...
 }
 ```
 
@@ -342,18 +343,19 @@ It looks like so:
         }
       ]
     }
-  ]
+  ],
+  "tools": [ ...]
   ...
 }
 ```
 
 In that payload, you're giving Gemini the original prompt, PLUS the thing it asked for, PLUS
-the data you collected at its request.
+the data you collected at its request, PLUS the list of tools.
 
 And then Gemini can assemble and digest all of that information and provide back another
 coherent response. This back-and-forth can continue for multiple iterations. In each
 response, if Gemini thinks (a) that it does not have enough information to provide a
-complete response, and (b) that getting information from the tools your app has access to,
+complete response, and (b) that getting information from one or more of the tools your app has access to,
 can help produce a more correct or complete answer, it will tell your app that, by sending back
 "functionCall" elements in the response as shown above.
 
@@ -545,11 +547,16 @@ have anything to say about how the agent talks to the LLM_.
 ![function calling image with MCP](./img/fn_calling_mcp.png)
 
 
-> NB: Given that, it would be
-> inappropriate to say "Gemini supports MCP", or "Claude Sonnet supports MCP" or even "an LLM
-> supports MCP."  It's not the model that would support MCP, it's the chatbot or the agent.
-> Some people conflate the chatbot and LLM into one thing, and call it "the LLM". I think that
-> confuses things.
+> NB: Given that, it would be inappropriate to say "Gemini supports MCP", or "Claude Sonnet
+> supports MCP" or even "an LLM supports MCP."  It's not the model that would support MCP,
+> it's the chatbot or the agent. The Model will support "tool use" or "function calling", or
+> it won't.  But it won't support MCP directly.
+> 
+> By The Way, Some people conflate the chatbot and LLM into one thing, and call it "the
+> LLM". In that case they say "The LLM supports MCP".  I guess that's true, but it relies on
+> a confusing re-definition of "LLM" to include "chatbot". I think that confusion is
+> unnecessary.
+
 
 In this example, the "tools" available to the custom agent in this repo are hand-coded in
 python and directly linked. The agent and the functions it might invoke, are defined all in
@@ -563,6 +570,86 @@ access.
 If MCP is involved, the things in the `tools` array will be obtained from the MCP Servers
 that are available, rather than from hard-coded names of local python (or JavaScript, or
 Java, etc) functions.
+
+## A Little more comparing Anthropic's API to Gemini's API
+
+The Gemini API defines "roles" for the contents in the message the client (aka chatbot, or agent) sends to the LLM:
+
+- **user** - any user-provided prompt or document
+- **model** - something the model sent to the client. This may include a "functionCall"
+- **tool** - result of a tool  invocation or function call. Should include "functionResponse"
+
+And it accumulates, like so:
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [ ...  ]
+    },
+    {
+      "role": "model",
+      "parts": [ { "functionCall": ...}...  ]
+    },
+    {
+      "role": "tool",
+      "parts": [ { "functionResponse": ...}...  ]
+    },
+    {
+      "role": "model",
+      "parts": [ { "functionCall": ...}...  ]
+    },
+    {
+      "role": "tool",
+      "parts": [ { "functionResponse": ...}...  ]
+    }
+  ],
+  "tools": [
+    {
+      "functionDeclarations": [ ... ]
+    }
+  ]
+}
+```
+
+Conversely, Anthropic’s API uses just two roles: `user` and `assistant`, and integrates
+"call this function" and "here are the results" directly into those roles via `tool_use` and
+`tool_result`
+messages. ([cite](https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/implement-tool-use))
+So the Anthropic equivalent to the above would be:
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "content": [ ...  ]
+    },
+    {
+      "role": "assistant",
+      "content": [ { "type": "tool_use", ...}...  ]
+    },
+    {
+      "role": "user",
+      "parts": [ { "type": "tool_result",...}...  ]
+    },
+    {
+      "role": "assistant",
+      "content": [ { "type": "tool_use", ...}...  ]
+    },
+    {
+      "role": "user",
+      "parts": [ { "type": "tool_result",...}...  ]
+    }
+  ],
+  "tools": [ { ... }...  ]
+}
+```
+
+Different structure, same semantics. The client is required to maintain the context and
+pass it in its entirety to the LLM.
+
 
 
 ## Interesting Note
