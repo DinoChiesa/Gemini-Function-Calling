@@ -328,7 +328,7 @@ It looks like so:
       ]
     },
     {
-      "role": "tool",
+      "role": "function",
       "parts": [
         {
           "functionResponse": {
@@ -349,15 +349,18 @@ It looks like so:
 }
 ```
 
-In that payload, you're giving Gemini the original prompt, PLUS the thing it asked for, PLUS
-the data you collected at its request, PLUS the list of tools.
+In that payload, you're giving Gemini the full history: the original prompt from
+the user, PLUS the thing it asked for (functionCall), PLUS the data you
+collected at its request (functionResponse), PLUS the list of tools.
 
-And then Gemini can assemble and digest all of that information and provide back another
-coherent response. This back-and-forth can continue for multiple iterations. In each
-response, if Gemini thinks (a) that it does not have enough information to provide a
-complete response, and (b) that getting information from one or more of the tools your app has access to,
-can help produce a more correct or complete answer, it will tell your app that, by sending back
-"functionCall" elements in the response as shown above.
+And then Gemini can assemble and digest all of that information and provide back
+another coherent response. This back-and-forth can continue for multiple
+iterations. In each request, the agent sends the entire history, in order. In
+each response, if Gemini thinks (a) that it does not have enough information to
+provide a complete response, and (b) that getting information from one or more
+of the tools your app has access to, can help produce a more correct or complete
+answer, it will tell your app that, by sending back "functionCall" elements in
+the response as shown above.
 
 Depending on the number of tools you register and the query you pass in, your app may need
 to iterate a few times, going back and forth with Gemini, before Gemini gives a final
