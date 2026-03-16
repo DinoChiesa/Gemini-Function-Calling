@@ -328,7 +328,7 @@ It looks like so:
       ]
     },
     {
-      "role": "function",
+      "role": "user",
       "parts": [
         {
           "functionResponse": {
@@ -352,6 +352,14 @@ It looks like so:
 In that payload, you're giving Gemini the full history: the original prompt from
 the user, PLUS the thing it asked for (functionCall), PLUS the data you
 collected at its request (functionResponse), PLUS the list of tools.
+
+> In the days of Gemini 2.0, and maybe 2.5, the value of the "role" field for
+> `functionResponse` could be either "tool" or "function". Later, Google
+> modified (simplified) this API to no longer support those roles explicitly.
+> Instead, there are just [two
+> roles](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#contents)
+> now supported: "user" and "model".  When the Agent-side invokes a function and
+> sends the response back to Gemini, it should use "role":"user".
 
 And then Gemini can assemble and digest all of that information and provide back
 another coherent response. This back-and-forth can continue for multiple
@@ -596,7 +604,7 @@ And it accumulates, like so:
       "parts": [ { "functionCall": ...}...  ]
     },
     {
-      "role": "tool",
+      "role": "user",
       "parts": [ { "functionResponse": ...}...  ]
     },
     {
@@ -604,7 +612,7 @@ And it accumulates, like so:
       "parts": [ { "functionCall": ...}...  ]
     },
     {
-      "role": "tool",
+      "role": "user",
       "parts": [ { "functionResponse": ...}...  ]
     }
   ],

@@ -265,7 +265,7 @@ def invoke_with_function_calling(api_key, verbose=False, filename_filter=None):
       )
 
       tool_response_section = {
-          "role": "tool",
+          "role": "user",  # previously "tool" or "function"
           "parts": function_tool_response_parts,
       }
       ongoing_contents_list.append(tool_response_section)
